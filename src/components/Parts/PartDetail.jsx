@@ -138,10 +138,18 @@ const PartDetail = () => {
 
       if (isEditMode) {
         // Actualizar el gasto existente
-        await axiosInstance.put(`/expenses/expenses/${selectedExpenseId}`, expenseData);
+        await axiosInstance.put(`/expenses/expenses/${selectedExpenseId}`, expenseData, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
       } else {
-        // Crear nuevo gasto
-        await axiosInstance.post(`/expenses/parts/${partId}/expenses`, expenseData);
+        // Crear un nuevo gasto
+        await axiosInstance.post(`/expenses/parts/${partId}/expenses`, expenseData, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
       }
 
       // Reiniciar los campos del formulario
