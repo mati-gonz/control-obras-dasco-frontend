@@ -136,6 +136,8 @@ const PartDetail = () => {
         receiptUrl: fileUrl, // Guardamos la URL del recibo si se subió uno
       };
 
+      console.log("Enviando datos:", expenseData); // Añadir esto para depurar
+
       if (isEditMode) {
         // Actualizar el gasto existente
         await axiosInstance.put(`/expenses/expenses/${selectedExpenseId}`, expenseData, {
@@ -168,7 +170,7 @@ const PartDetail = () => {
     }
   };
 
-  
+
   const handleDeleteExpense = async (expenseId, receiptUrl) => {
     try {
       // Primero, eliminar el gasto desde el backend
