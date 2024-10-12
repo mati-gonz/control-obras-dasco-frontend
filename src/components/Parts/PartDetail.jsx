@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import axiosInstance from '../../services/axiosInstance';
-import axios from 'axios'; // Se añade axios para manejar la subida del archivo a cPanel
+import axios from 'axios';
 import { useParams, useLocation } from 'react-router-dom';
 import {
   Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
@@ -9,6 +9,81 @@ import {
 import { format } from 'date-fns';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
+
+// Utilidad para formatear números
+const formatNumber = (num) => parseFloat(num).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+// Función para subir archivos al servidor cPanel
+const uploadReceipt = async (file) => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const uploadResponse = await axios.post('https://dasco.cl/upload/upload.php', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (uploadResponse.data.status === 'success') {
+      return uploadResponse.data.fileUrl; // URL del archivo subido
+    } else {
+      throw new Error(uploadResponse.data.message || 'Error al subir el archivo');
+    }
+  } catch (error) {
+    console.error('Error al subir el archivo:', error);
+    return null;
+  }
+};
+
+// Función para descargar recibos
+const downloadReceipt = async (expenseId, download = false) => {
+  try {
+    const receiptUrl = `https://dasco.cl/dasco_receipts/recibo-${expenseId}.gz`;
+  
+    if (download) {
+      const a = document.createElement('a');
+      a.href = receiptUrl;
+      a.download = `recibo-${expenseId}`;
+      a.click();
+    } else if (receiptUrl.endsWith(".pdf")) {
+      window.open(receiptUrl, '_blank');
+    } else if (receiptUrl.match(/\.(jpg|jpeg|png)$/)) {
+      return receiptUrl;
+    } else {
+      const a = document.createElement('a');
+      a.href = receiptUrl;
+      a.download = `recibo-${expenseId}`;
+      a.click();
+    }
+  } catch (error) {
+    console.error('Error descargando el recibo:', error);
+    return null;
+  }
+};
+
+// Función para manejar la creación o actualización de gastos
+const saveExpense = async (expenseData, isEditMode, partId, selectedExpenseId) => {
+  try {
+    if (isEditMode) {
+      // Actualizar el gasto existente
+      await axiosInstance.put(`/expenses/expenses/${selectedExpenseId}`, expenseData, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } else {
+      // Crear un nuevo gasto
+      await axiosInstance.post(`/expenses/parts/${partId}/expenses`, expenseData, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+  } catch (error) {
+    console.error('Error al guardar el gasto:', error);
+  }
+};
 
 const PartDetail = () => {
   const { partId } = useParams();
@@ -28,31 +103,7 @@ const PartDetail = () => {
   const [receiptUrl, setReceiptUrl] = useState(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
-  const downloadReceipt = async (expenseId, download = false) => {
-    try {
-      const receiptUrl = `https://dasco.cl/dasco_receipts/recibo-${expenseId}.gz`;
-  
-      if (download) {
-        const a = document.createElement('a');
-        a.href = receiptUrl;
-        a.download = `recibo-${expenseId}`;
-        a.click();
-      } else if (receiptUrl.endsWith(".pdf")) {
-        window.open(receiptUrl, '_blank');
-      } else if (receiptUrl.match(/\.(jpg|jpeg|png)$/)) {
-        setReceiptUrl(receiptUrl);
-        setIsImageModalOpen(true);
-      } else {
-        const a = document.createElement('a');
-        a.href = receiptUrl;
-        a.download = `recibo-${expenseId}`;
-        a.click();
-      }
-    } catch (error) {
-      console.error('Error descargando el recibo:', error);
-    }
-  };
-  
+  // Función para obtener los detalles de la partida
   const fetchPartDetails = async () => {
     try {
       const partResponse = await axiosInstance.get(`/parts/${partId}`);
@@ -69,6 +120,7 @@ const PartDetail = () => {
     fetchPartDetails();
   }, [partId]);
 
+  // Función para manejar cambios en los campos de entrada
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewExpense({
@@ -77,18 +129,16 @@ const PartDetail = () => {
     });
   };
 
+  // Función para manejar cambios en el archivo seleccionado
   const handleFileChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      setNewExpense({
-        ...newExpense,
-        receipt: file,
-      });
-    } else {
-      console.error('No se ha seleccionado ningún archivo');
-    }
+    setNewExpense({
+      ...newExpense,
+      receipt: file,
+    });
   };
 
+  // Función para abrir el modal de edición
   const handleEditExpense = (expense) => {
     setIsEditMode(true);
     setSelectedExpenseId(expense.id);
@@ -101,96 +151,48 @@ const PartDetail = () => {
     setIsModalOpen(true);
   };
 
-  // Modificación para subir archivos al servidor cPanel y guardar los datos en el backend
+  // Función para manejar la creación o edición de un gasto
   const handleSaveExpense = async (e) => {
     e.preventDefault();
+    let fileUrl = null;
 
-    try {
-      let fileUrl = null;
-
-      // Si se ha seleccionado un archivo, lo subimos al servidor cPanel
-      if (newExpense.receipt) {
-        const formData = new FormData();
-        formData.append('file', newExpense.receipt);
-
-        // Subir archivo al servidor cPanel usando el endpoint PHP
-        const uploadResponse = await axios.post('https://dasco.cl/upload/upload.php', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
-        });
-
-        if (uploadResponse.data.status === 'success') {
-          // Almacenar la URL del archivo subido
-          fileUrl = uploadResponse.data.fileUrl;
-        } else {
-          throw new Error(uploadResponse.data.message || 'Error al subir el archivo');
-        }
-      }
-
-      // Preparar los datos para enviar al backend de Node.js
-      const expenseData = {
-        amount: newExpense.amount,
-        description: newExpense.description,
-        date: newExpense.date,
-        receiptUrl: fileUrl, // Guardamos la URL del recibo si se subió uno
-      };
-
-      console.log("Enviando datos:", expenseData); // Añadir esto para depurar
-
-      if (isEditMode) {
-        // Actualizar el gasto existente
-        await axiosInstance.put(`/expenses/expenses/${selectedExpenseId}`, expenseData, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-      } else {
-        // Crear un nuevo gasto
-        await axiosInstance.post(`/expenses/parts/${partId}/expenses`, expenseData, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-      }
-
-      // Reiniciar los campos del formulario
-      setNewExpense({
-        amount: '',
-        description: '',
-        date: '',
-        receipt: null,
-      });
-
-      setIsModalOpen(false);
-      setIsEditMode(false);
-      fetchPartDetails(); // Recargar detalles de la partida y los gastos
-    } catch (error) {
-      console.error('Error al guardar el gasto:', error);
+    // Subir archivo si está presente
+    if (newExpense.receipt) {
+      fileUrl = await uploadReceipt(newExpense.receipt);
     }
+
+    // Crear los datos del gasto
+    const expenseData = {
+      amount: newExpense.amount,
+      description: newExpense.description,
+      date: newExpense.date,
+      receiptUrl: fileUrl,
+    };
+
+    await saveExpense(expenseData, isEditMode, partId, selectedExpenseId);
+
+    setIsModalOpen(false);
+    setIsEditMode(false);
+    setNewExpense({
+      amount: '',
+      description: '',
+      date: '',
+      receipt: null,
+    });
+    fetchPartDetails(); // Recargar detalles de la partida y los gastos
   };
 
-
+  // Función para eliminar un gasto
   const handleDeleteExpense = async (expenseId, receiptUrl) => {
     try {
-      // Primero, eliminar el gasto desde el backend
       await axiosInstance.delete(`/expenses/${expenseId}`);
-      
-      // Después, hacer una petición al servidor PHP para eliminar el archivo
       if (receiptUrl) {
-        await axios.post('https://tu-servidor-cpanel.com/upload/delete.php', { fileUrl: receiptUrl });
+        await axios.post('https://dasco.cl/upload/delete.php', { fileUrl: receiptUrl });
       }
-  
-      // Recargar los detalles de los gastos
-      fetchPartDetails();
+      fetchPartDetails(); // Recargar detalles de los gastos
     } catch (error) {
       console.error('Error al eliminar el gasto:', error);
     }
-  };  
-  
-
-  const formatNumber = (num) => {
-    return parseFloat(num).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   return (
@@ -232,42 +234,22 @@ const PartDetail = () => {
                 <TableCell>
                   {expense.receiptUrl ? (
                     <>
-                      <Button
-                        variant="outlined"
-                        color="primary"
-                        onClick={() => downloadReceipt(expense.id)}
-                      >
+                      <Button variant="outlined" color="primary" onClick={() => downloadReceipt(expense.id)}>
                         Ver Recibo
                       </Button>
-                      <Button
-                        variant="outlined"
-                        color="secondary"
-                        sx={{ ml: 1 }}
-                        onClick={() => downloadReceipt(expense.id, true)}
-                      >
+                      <Button variant="outlined" color="secondary" sx={{ ml: 1 }} onClick={() => downloadReceipt(expense.id, true)}>
                         Descargar
                       </Button>
                     </>
-                  ) : (
-                    'No disponible'
-                  )}
+                  ) : 'No disponible'}
                 </TableCell>
                 <TableCell>
                   {(userRole === 'admin' || currentUserId === expense.userId) && (
                     <>
-                      <Button
-                        variant="contained"
-                        color="primary"
-                        sx={{ mr: 1 }}
-                        onClick={() => handleEditExpense(expense)}
-                      >
+                      <Button variant="contained" color="primary" sx={{ mr: 1 }} onClick={() => handleEditExpense(expense)}>
                         Editar
                       </Button>
-                      <Button
-                        variant="contained"
-                        color="error"
-                        onClick={() => handleDeleteExpense(expense.id)}
-                      >
+                      <Button variant="contained" color="error" onClick={() => handleDeleteExpense(expense.id, expense.receiptUrl)}>
                         Eliminar
                       </Button>
                     </>
@@ -291,26 +273,10 @@ const PartDetail = () => {
           </Typography>
           <form onSubmit={handleSaveExpense}>
             <div className="mb-4">
-              <TextField
-                label="Monto"
-                variant="outlined"
-                fullWidth
-                type="number"
-                name="amount"
-                value={newExpense.amount}
-                onChange={handleInputChange}
-                required
-              />
+              <TextField label="Monto" variant="outlined" fullWidth type="number" name="amount" value={newExpense.amount} onChange={handleInputChange} required />
             </div>
             <div className="mb-4">
-              <TextField
-                label="Descripción"
-                variant="outlined"
-                fullWidth
-                name="description"
-                value={newExpense.description}
-                onChange={handleInputChange}
-              />
+              <TextField label="Descripción" variant="outlined" fullWidth name="description" value={newExpense.description} onChange={handleInputChange} />
             </div>
             <div className="mb-4">
               <TextField
@@ -321,23 +287,14 @@ const PartDetail = () => {
                 name="date"
                 value={newExpense.date}
                 onChange={handleInputChange}
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                inputProps={{
-                  max: new Date().toISOString().split("T")[0] // Limitamos hasta el día de hoy
-                }}
+                InputLabelProps={{ shrink: true }}
+                inputProps={{ max: new Date().toISOString().split("T")[0] }}
                 required
               />
             </div>
             <div className="mb-4">
               <InputLabel htmlFor="receipt">Subir Recibo</InputLabel>
-              <input
-                id="receipt"
-                type="file"
-                accept=".jpg,.jpeg,.png,.pdf"
-                onChange={handleFileChange}
-              />
+              <input id="receipt" type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={handleFileChange} />
             </div>
             <div className="flex items-center justify-between">
               <Button type="submit" variant="contained" color="primary">
