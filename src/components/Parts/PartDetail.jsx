@@ -15,25 +15,26 @@ const formatNumber = (num) => parseFloat(num).toLocaleString('es-CL', { minimumF
 // Función para descargar recibos
 const downloadReceipt = async (expenseId, download = false) => {
   try {
-    // Obtener la URL firmada desde el backend
+    // Obtener la URL firmada y la extensión del archivo desde el backend
     const response = await axiosInstance.get(`/expenses/${expenseId}/receipt`);
     console.log('DATA:', response.data);
-    console.log('URL firmada:', response.data.signedUrl);
     const signedUrl = response.data.signedUrl;
+    const fileExtension = response.data.fileExtension; // Obtenemos la extensión del archivo
 
+    // Verificar el tipo de archivo utilizando la extensión, no la URL
     if (download) {
       const a = document.createElement('a');
-      a.href = signedUrl; // Usamos la URL firmada
-      a.download = `recibo-${expenseId}`;
+      a.href = signedUrl;
+      a.download = `recibo-${expenseId}.${fileExtension}`; // Usar la extensión aquí
       a.click();
-    } else if (signedUrl.endsWith(".pdf")) {
-      window.open(signedUrl, '_blank'); // Abre en una nueva pestaña si es PDF
-    } else if (signedUrl.match(/\.(jpg|jpeg|png)$/)) {
+    } else if (fileExtension === 'pdf') {
+      window.open(signedUrl, '_blank'); // Abrir PDF en una nueva pestaña
+    } else if (['jpg', 'jpeg', 'png'].includes(fileExtension)) {
       return signedUrl; // Devolver la URL para usarla en una imagen
     } else {
       const a = document.createElement('a');
-      a.href = signedUrl; // Usamos la URL firmada
-      a.download = `recibo-${expenseId}`;
+      a.href = signedUrl;
+      a.download = `recibo-${expenseId}.${fileExtension}`; // Descargar el archivo con la extensión correcta
       a.click();
     }
   } catch (error) {
