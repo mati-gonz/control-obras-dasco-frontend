@@ -21,16 +21,16 @@ const downloadReceipt = async (expenseId, download = false) => {
 
     if (download) {
       const a = document.createElement('a');
-      a.href = signedUrl;
+      a.href = signedUrl; // Usamos la URL firmada
       a.download = `recibo-${expenseId}`;
       a.click();
     } else if (signedUrl.endsWith(".pdf")) {
-      window.open(signedUrl, '_blank');
+      window.open(signedUrl, '_blank'); // Abre en una nueva pestaña si es PDF
     } else if (signedUrl.match(/\.(jpg|jpeg|png)$/)) {
       return signedUrl; // Devolver la URL para usarla en una imagen
     } else {
       const a = document.createElement('a');
-      a.href = signedUrl;
+      a.href = signedUrl; // Usamos la URL firmada
       a.download = `recibo-${expenseId}`;
       a.click();
     }
@@ -206,10 +206,23 @@ const PartDetail = () => {
                 <TableCell>
                   {expense.receiptUrl ? (
                     <>
-                      <Button variant="outlined" color="primary" onClick={() => downloadReceipt(expense.receiptUrl)}>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={async () => {
+                          const url = await downloadReceipt(expense.id);
+                          setReceiptUrl(url); // Almacena la URL para mostrar en el modal
+                          setIsImageModalOpen(true); // Abre el modal
+                        }}
+                      >
                         Ver Recibo
                       </Button>
-                      <Button variant="outlined" color="secondary" sx={{ ml: 1 }} onClick={() => downloadReceipt(expense.receiptUrl, true)}>
+                      <Button
+                        variant="outlined"
+                        color="secondary"
+                        sx={{ ml: 1 }}
+                        onClick={() => downloadReceipt(expense.id, true)} // Descargar archivo
+                      >
                         Descargar
                       </Button>
                     </>
