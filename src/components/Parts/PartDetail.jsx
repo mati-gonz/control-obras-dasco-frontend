@@ -168,14 +168,24 @@ const PartDetail = () => {
     }
   };
 
-  const handleDeleteExpense = async (expenseId) => {
+  
+  const handleDeleteExpense = async (expenseId, receiptUrl) => {
     try {
-      await axiosInstance.delete(`/expenses/expenses/${expenseId}`);
-      fetchPartDetails(); // Actualizar la lista de gastos después de eliminar
+      // Primero, eliminar el gasto desde el backend
+      await axiosInstance.delete(`/expenses/${expenseId}`);
+      
+      // Después, hacer una petición al servidor PHP para eliminar el archivo
+      if (receiptUrl) {
+        await axios.post('https://tu-servidor-cpanel.com/upload/delete.php', { fileUrl: receiptUrl });
+      }
+  
+      // Recargar los detalles de los gastos
+      fetchPartDetails();
     } catch (error) {
       console.error('Error al eliminar el gasto:', error);
     }
-  };
+  };  
+  
 
   const formatNumber = (num) => {
     return parseFloat(num).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
