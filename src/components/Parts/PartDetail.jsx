@@ -81,12 +81,17 @@ const PartDetail = () => {
 
 
   const handleFileChange = (e) => {
-    setNewExpense({
-      ...newExpense,
-      receipt: e.target.files[0],
-    });
+    const file = e.target.files[0];
+    if (file) {
+      setNewExpense({
+        ...newExpense,
+        receipt: file,
+      });
+    } else {
+      console.error('No se ha seleccionado ningún archivo');
+    }
   };
-
+  
   // Abrir modal para editar gasto
   const handleEditExpense = (expense) => {
     setIsEditMode(true);
