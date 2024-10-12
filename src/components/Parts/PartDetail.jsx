@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axiosInstance from '../../services/axiosInstance';
+import axios from 'axios'; // Se añade axios para manejar la subida del archivo a cPanel
 import { useParams, useLocation } from 'react-router-dom';
 import {
   Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
@@ -22,14 +23,13 @@ const PartDetail = () => {
     receipt: null,
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditMode, setIsEditMode] = useState(false); // Nuevo estado para manejar edición
-  const [selectedExpenseId, setSelectedExpenseId] = useState(null); // Para identificar el gasto seleccionado
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [selectedExpenseId, setSelectedExpenseId] = useState(null);
   const [receiptUrl, setReceiptUrl] = useState(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
   const downloadReceipt = async (expenseId, download = false) => {
     try {
-      // Aquí ya no necesitas hacer una petición a tu backend para obtener el archivo
       const receiptUrl = `https://dasco.cl/dasco_receipts/recibo-${expenseId}.gz`;
   
       if (download) {
@@ -53,7 +53,6 @@ const PartDetail = () => {
     }
   };
   
-
   const fetchPartDetails = async () => {
     try {
       const partResponse = await axiosInstance.get(`/parts/${partId}`);
@@ -70,7 +69,6 @@ const PartDetail = () => {
     fetchPartDetails();
   }, [partId]);
 
-  
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewExpense({
@@ -78,7 +76,6 @@ const PartDetail = () => {
       [name]: value,
     });
   };
-
 
   const handleFileChange = (e) => {
     const file = e.target.files[0];
@@ -91,8 +88,7 @@ const PartDetail = () => {
       console.error('No se ha seleccionado ningún archivo');
     }
   };
-  
-  // Abrir modal para editar gasto
+
   const handleEditExpense = (expense) => {
     setIsEditMode(true);
     setSelectedExpenseId(expense.id);
@@ -100,63 +96,79 @@ const PartDetail = () => {
       amount: expense.amount,
       description: expense.description,
       date: expense.date,
-      receipt: null, // No queremos sobreescribir el recibo si no se selecciona uno nuevo
+      receipt: null,
     });
     setIsModalOpen(true);
   };
 
-// Crear o editar un gasto
-const handleSaveExpense = async (e) => {
-  e.preventDefault();
+  // Modificación para subir archivos al servidor cPanel y guardar los datos en el backend
+  const handleSaveExpense = async (e) => {
+    e.preventDefault();
 
-  try {
-    const formData = new FormData();
-    formData.append('amount', newExpense.amount);
-    formData.append('description', newExpense.description);
-    formData.append('date', newExpense.date);
+    try {
+      let fileUrl = null;
 
-    if (newExpense.receipt) {
-      formData.append('receipt', newExpense.receipt);
-    }
+      // Si se ha seleccionado un archivo, lo subimos al servidor cPanel
+      if (newExpense.receipt) {
+        const formData = new FormData();
+        formData.append('file', newExpense.receipt);
 
-    if (isEditMode) {
-      // Actualizar gasto existente
-      await axiosInstance.put(`/expenses/expenses/${selectedExpenseId}`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+        // Subir archivo al servidor cPanel usando el endpoint PHP
+        const uploadResponse = await axios.post('https://dasco.cl/upload/upload.php', formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        });
+
+        if (uploadResponse.data.status === 'success') {
+          // Almacenar la URL del archivo subido
+          fileUrl = uploadResponse.data.fileUrl;
+        } else {
+          throw new Error(uploadResponse.data.message || 'Error al subir el archivo');
+        }
+      }
+
+      // Preparar los datos para enviar al backend de Node.js
+      const expenseData = {
+        amount: newExpense.amount,
+        description: newExpense.description,
+        date: newExpense.date,
+        receiptUrl: fileUrl, // Guardamos la URL del recibo si se subió uno
+      };
+
+      if (isEditMode) {
+        // Actualizar el gasto existente
+        await axiosInstance.put(`/expenses/expenses/${selectedExpenseId}`, expenseData);
+      } else {
+        // Crear nuevo gasto
+        await axiosInstance.post(`/expenses/parts/${partId}/expenses`, expenseData);
+      }
+
+      // Reiniciar los campos del formulario
+      setNewExpense({
+        amount: '',
+        description: '',
+        date: '',
+        receipt: null,
       });
-    } else {
-      // Crear nuevo gasto
-      await axiosInstance.post(`/expenses/parts/${partId}/expenses`, formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+
+      setIsModalOpen(false);
+      setIsEditMode(false);
+      fetchPartDetails(); // Recargar detalles de la partida y los gastos
+    } catch (error) {
+      console.error('Error al guardar el gasto:', error);
     }
+  };
 
-    setNewExpense({
-      amount: '',
-      description: '',
-      date: '',
-      receipt: null,
-    });
+  const handleDeleteExpense = async (expenseId) => {
+    try {
+      await axiosInstance.delete(`/expenses/expenses/${expenseId}`);
+      fetchPartDetails(); // Actualizar la lista de gastos después de eliminar
+    } catch (error) {
+      console.error('Error al eliminar el gasto:', error);
+    }
+  };
 
-    setIsModalOpen(false);
-    setIsEditMode(false);
-    fetchPartDetails(); // Recargar detalles de la partida y los gastos
-  } catch (error) {
-    console.error('Error al guardar el gasto:', error);
-  }
-};
-
-// Eliminar un gasto
-const handleDeleteExpense = async (expenseId) => {
-  try {
-    await axiosInstance.delete(`/expenses/expenses/${expenseId}`);
-    fetchPartDetails(); // Actualizar la lista de gastos después de eliminar
-  } catch (error) {
-    console.error('Error al eliminar el gasto:', error);
-  }
-};
-
-  // Función para formatear números
   const formatNumber = (num) => {
     return parseFloat(num).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
@@ -180,70 +192,70 @@ const handleDeleteExpense = async (expenseId) => {
 
       <TableContainer component={Paper}>
         <Table>
-        <TableHead>
-        <TableRow>
-            <TableCell>Monto</TableCell>
-            <TableCell>Descripción</TableCell>
-            <TableCell>Fecha</TableCell>
-            <TableCell>Usuario</TableCell>  {/* Nueva columna */}
-            <TableCell>Recibo</TableCell>
-            <TableCell>Acciones</TableCell> {/* Columna para acciones de edición/eliminación */}
-        </TableRow>
-        </TableHead>
-        <TableBody>
-        {expenses.map((expense) => (
-          <TableRow key={expense.id}>
-            <TableCell>${formatNumber(expense.amount)}</TableCell>
-            <TableCell>{expense.description}</TableCell>
-            <TableCell>{format(new Date(expense.date), 'dd/MM/yyyy')}</TableCell>
-            <TableCell>{expense.user?.name || 'Desconocido'}</TableCell>
-            <TableCell>
-              {expense.receiptUrl ? (
-                <>
-                  <Button
-                    variant="outlined"
-                    color="primary"
-                    onClick={() => downloadReceipt(expense.id)}
-                  >
-                    Ver Recibo
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    color="secondary"
-                    sx={{ ml: 1 }}
-                    onClick={() => downloadReceipt(expense.id, true)}
-                  >
-                    Descargar
-                  </Button>
-                </>
-              ) : (
-                'No disponible'
-              )}
-            </TableCell>
-            <TableCell>
-              {(userRole === 'admin' || currentUserId === expense.userId) && (
-                <>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    sx={{ mr: 1 }}
-                    onClick={() => handleEditExpense(expense)}
-                  >
-                    Editar
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => handleDeleteExpense(expense.id)}
-                  >
-                    Eliminar
-                  </Button>
-                </>
-              )}
-            </TableCell>
-        </TableRow>
-        ))}
-        </TableBody>
+          <TableHead>
+            <TableRow>
+              <TableCell>Monto</TableCell>
+              <TableCell>Descripción</TableCell>
+              <TableCell>Fecha</TableCell>
+              <TableCell>Usuario</TableCell>
+              <TableCell>Recibo</TableCell>
+              <TableCell>Acciones</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {expenses.map((expense) => (
+              <TableRow key={expense.id}>
+                <TableCell>${formatNumber(expense.amount)}</TableCell>
+                <TableCell>{expense.description}</TableCell>
+                <TableCell>{format(new Date(expense.date), 'dd/MM/yyyy')}</TableCell>
+                <TableCell>{expense.user?.name || 'Desconocido'}</TableCell>
+                <TableCell>
+                  {expense.receiptUrl ? (
+                    <>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => downloadReceipt(expense.id)}
+                      >
+                        Ver Recibo
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="secondary"
+                        sx={{ ml: 1 }}
+                        onClick={() => downloadReceipt(expense.id, true)}
+                      >
+                        Descargar
+                      </Button>
+                    </>
+                  ) : (
+                    'No disponible'
+                  )}
+                </TableCell>
+                <TableCell>
+                  {(userRole === 'admin' || currentUserId === expense.userId) && (
+                    <>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        sx={{ mr: 1 }}
+                        onClick={() => handleEditExpense(expense)}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => handleDeleteExpense(expense.id)}
+                      >
+                        Eliminar
+                      </Button>
+                    </>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
         </Table>
       </TableContainer>
 
@@ -322,26 +334,26 @@ const handleDeleteExpense = async (expenseId) => {
       {/* Modal para mostrar la imagen */}
       <Modal open={isImageModalOpen} onClose={() => setIsImageModalOpen(false)}>
         <Box sx={{
-            margin: '5% auto',
-            padding: 3,
-            backgroundColor: 'white',
-            width: '80%',
-            textAlign: 'center',
-            boxShadow: 24,
-            outline: 'none',
-            overflow: 'hidden'
+          margin: '5% auto',
+          padding: 3,
+          backgroundColor: 'white',
+          width: '80%',
+          textAlign: 'center',
+          boxShadow: 24,
+          outline: 'none',
+          overflow: 'hidden'
         }}>
-            <Typography variant="h6">Recibo</Typography>
-            {receiptUrl && (
+          <Typography variant="h6">Recibo</Typography>
+          {receiptUrl && (
             <Zoom>
-                <img src={receiptUrl} alt="Recibo" style={{ maxWidth: '100%', height: 'auto', cursor: 'zoom-in' }} />
+              <img src={receiptUrl} alt="Recibo" style={{ maxWidth: '100%', height: 'auto', cursor: 'zoom-in' }} />
             </Zoom>
-            )}
-            <Button variant="contained" color="secondary" onClick={() => setIsImageModalOpen(false)} sx={{ mt: 2 }}>
+          )}
+          <Button variant="contained" color="secondary" onClick={() => setIsImageModalOpen(false)} sx={{ mt: 2 }}>
             Cerrar
-            </Button>
+          </Button>
         </Box>
-    </Modal>
+      </Modal>
     </div>
   );
 };
