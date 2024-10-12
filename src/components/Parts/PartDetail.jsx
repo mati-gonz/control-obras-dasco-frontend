@@ -17,6 +17,8 @@ const downloadReceipt = async (expenseId, download = false) => {
   try {
     // Obtener la URL firmada desde el backend
     const response = await axiosInstance.get(`/expenses/${expenseId}/receipt`);
+    console.log('DATA:', response.data);
+    console.log('URL firmada:', response.data.signedUrl);
     const signedUrl = response.data.signedUrl;
 
     if (download) {
