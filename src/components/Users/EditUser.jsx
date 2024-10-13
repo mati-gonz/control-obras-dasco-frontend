@@ -1,4 +1,3 @@
-// src/components/Dashboard/EditUser.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axiosInstance from '../../services/axiosInstance';  // Usar axiosInstance en vez de axios
@@ -35,20 +34,22 @@ const EditUser = () => {
     
         fetchUserData();
     }, [id, navigate, user]);
-    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
 
-        if (!user || user.role !== 'admin') {
-            navigate('/');
-            return;
+        // Preparamos los datos del formulario
+        const userData = { name, email };
+
+        // Solo los administradores pueden cambiar el rol
+        if (user.role === 'admin') {
+            userData.role = role;
         }
 
         try {
-            await axiosInstance.put(`/users/${id}`, { name, email, role });
+            await axiosInstance.put(`/users/${id}`, userData);
             setSuccess('Usuario actualizado con éxito');
 
             // Redirigir al User Management después de actualizar el usuario
@@ -94,18 +95,23 @@ const EditUser = () => {
                             required
                         />
                     </div>
-                    <div className="mb-6">
-                        <label className="block text-gray-700">Rol:</label>
-                        <select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
-                            className="w-full p-2 border border-gray-300 rounded mt-1"
-                            required
-                        >
-                            <option value="user">Usuario Regular</option>
-                            <option value="admin">Administrador</option>
-                        </select>
-                    </div>
+                    
+                    {/* Solo mostrar el campo de rol si el usuario es administrador */}
+                    {user.role === 'admin' && (
+                        <div className="mb-6">
+                            <label className="block text-gray-700">Rol:</label>
+                            <select
+                                value={role}
+                                onChange={(e) => setRole(e.target.value)}
+                                className="w-full p-2 border border-gray-300 rounded mt-1"
+                                required
+                            >
+                                <option value="user">Usuario Regular</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                        </div>
+                    )}
+
                     <div className="flex justify-between">
                         <button 
                             type="button" 
