@@ -171,7 +171,7 @@ const PartDetail = () => {
   // Función para eliminar un gasto
   const handleDeleteExpense = async (expenseId) => {
     try {
-      await axiosInstance.delete(`/expenses/${expenseId}`);
+      await axiosInstance.delete(`/expenses/expenses/${expenseId}`);
       fetchPartDetails(); // Recargar detalles de los gastos
     } catch (error) {
       console.error('Error al eliminar el gasto:', error);
