@@ -16,25 +16,26 @@ const EditUser = () => {
 
     useEffect(() => {
         const fetchUserData = async () => {
-            if (!user || user.role !== 'admin') {
-                navigate('/'); // Redirige si no es admin o no está autenticado
-                return;
-            }
-
             try {
                 const response = await axiosInstance.get(`/users/${id}`);
                 const { name, email, role } = response.data.data;
                 setName(name);
                 setEmail(email);
                 setRole(role);
+    
+                // Si el usuario no es administrador y no es el propietario del perfil, redirigir
+                if (user.role !== 'admin' && user.id !== parseInt(id)) {
+                    navigate('/'); // Redirigir a la página principal si no tiene permiso
+                }
             } catch (error) {
                 console.error('Error fetching user data', error);
                 setError('Error al obtener los datos del usuario.');
             }
         };
-
+    
         fetchUserData();
     }, [id, navigate, user]);
+    
 
     const handleSubmit = async (e) => {
         e.preventDefault();
