@@ -1,49 +1,32 @@
 // src/components/Dashboard/UserDetails.jsx
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import axiosInstance from '../../services/axiosInstance'; // Usar axiosInstance para manejar el token
-import ChangePasswordModal from './ChangePasswordModal';
-import { useAuth } from '../../context/useAuth';  // Importar el contexto de autenticación
+import axiosInstance from '../../services/axiosInstance'; // Usar axiosInstance para manejar el token automáticamente
+import { useAuth } from '../../context/useAuth';  // Usar contexto de autenticación
 
 const UserDetails = () => {
-    const { id } = useParams();  // Obtener el ID desde la URL
+    const { id } = useParams();
     const navigate = useNavigate();
-    const location = useLocation();
     const { user: loggedInUser } = useAuth();  // Obtener el usuario autenticado desde el contexto
-    const isProfileView = location.pathname === '/me'; 
     const [user, setUser] = useState(null);
     const [works, setWorks] = useState([]);
     const [error, setError] = useState('');
-    const [isPasswordModalOpen, setPasswordModalOpen] = useState(false); 
 
     useEffect(() => {
         const fetchUserData = async () => {
             try {
-                let response;
-    
-                // Si es la vista de "Mi Perfil", llama a /me
-                if (isProfileView) {
-                    response = await axiosInstance.get('/users/me');
-                } else {
-                    // Si es admin viendo otro perfil, usa el ID de la URL
-                    response = await axiosInstance.get(`/users/${id}`);
-                }
-
-                console.log(response);
-                console.log(response.data);
-    
-                setUser(response.data); // Asegúrate de que los datos estén correctamente en `response.data`
-                setWorks(response.data.works || []); // Verifica si los datos son correctos
+                // Obtener detalles del usuario
+                const userResponse = await axiosInstance.get(`/users/${id}`);
+                setUser(userResponse.data.data);
+                setWorks(userResponse.data.data.works || []);
             } catch (error) {
                 console.error('Error fetching user data:', error);
                 setError('Error al obtener los detalles del usuario.');
             }
         };
-    
-        if (id) { // Verifica si `id` tiene un valor válido antes de hacer la petición
-            fetchUserData();
-        }
-    }, [id, isProfileView]);
+
+        fetchUserData();
+    }, [id]);
 
     if (error) {
         return <div>{error}</div>;
@@ -53,16 +36,23 @@ const UserDetails = () => {
         return <div>Cargando...</div>;
     }
 
-    const handleOpenPasswordModal = () => {
-        setPasswordModalOpen(true);
+    const handleEdit = () => {
+        navigate(`/edit-user/${user.id}`);
     };
 
-    const handleClosePasswordModal = () => {
-        setPasswordModalOpen(false);
+    const handleDelete = async () => {
+        try {
+            await axiosInstance.delete(`/users/${user.id}`);
+            navigate('/user-management');
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            setError('Error al eliminar el usuario.');
+        }
     };
 
     return (
         <div className="p-6">
+            {/* Detalles del usuario */}
             <div className="bg-white shadow rounded-lg p-6 mb-6">
                 <h1 className="text-2xl font-bold mb-4">Detalles del Usuario</h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -71,35 +61,28 @@ const UserDetails = () => {
                         <p><strong>Email:</strong> {user.email}</p>
                         <p><strong>Rol:</strong> {user.role}</p>
                     </div>
-                    {isProfileView && (
+                    {loggedInUser?.role === 'admin' && (
                         <div className="flex flex-col space-y-4">
-                            {loggedInUser.role === 'admin' && (
-                                <button
-                                    onClick={() => navigate(`/edit-user/${user.id}`)}
-                                    className="bg-yellow-500 text-white py-2 px-4 rounded text-sm hover:bg-yellow-600 transition duration-200"
-                                    style={{ width: 'fit-content', alignSelf: 'flex-start' }}
-                                >
-                                    Editar
-                                </button>
-                            )}
                             <button
-                                onClick={handleOpenPasswordModal}
-                                className="bg-blue-500 text-white py-2 px-4 rounded text-sm hover:bg-blue-600 transition duration-200"
+                                onClick={handleEdit}
+                                className="bg-yellow-500 text-white py-2 px-4 rounded text-sm hover:bg-yellow-600 transition duration-200"
                                 style={{ width: 'fit-content', alignSelf: 'flex-start' }}
                             >
-                                Cambiar Contraseña
+                                Editar
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                className="bg-red-500 text-white py-2 px-4 rounded text-sm hover:bg-red-600 transition duration-200"
+                                style={{ width: 'fit-content', alignSelf: 'flex-start' }}
+                            >
+                                Eliminar
                             </button>
                         </div>
                     )}
-
-                    <ChangePasswordModal
-                        open={isPasswordModalOpen}
-                        handleClose={handleClosePasswordModal}
-                        userId={user.id}
-                    />
                 </div>
             </div>
 
+            {/* Lista de obras a cargo */}
             <div className="bg-white shadow rounded-lg p-6 mb-6">
                 <h2 className="text-xl font-bold mb-4">Obras a Cargo</h2>
                 <ul className="list-disc pl-5">
@@ -114,6 +97,15 @@ const UserDetails = () => {
                     )}
                 </ul>
             </div>
+
+            {/* Botón de volver */}
+            <button
+                onClick={() => navigate('/user-management')}
+                className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-200"
+                style={{ width: 'fit-content', alignSelf: 'flex-start' }}
+            >
+                Volver
+            </button>
         </div>
     );
 };
