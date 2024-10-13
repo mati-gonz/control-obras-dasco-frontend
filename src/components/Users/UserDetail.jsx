@@ -28,6 +28,9 @@ const UserDetails = () => {
                     // Si es admin viendo otro perfil, usa el ID de la URL
                     response = await axiosInstance.get(`/users/${id}`);
                 }
+
+                console.log(response);
+                console.log(response.data);
     
                 setUser(response.data); // Asegúrate de que los datos estén correctamente en `response.data`
                 setWorks(response.data.works || []); // Verifica si los datos son correctos
