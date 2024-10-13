@@ -47,10 +47,15 @@ const UserDetails = () => {
     }
 
     const handleEdit = () => {
-        if (isProfileView) {
+        if (isProfileView || (user.id === id)) {
+            // Si es la vista de "Mi Perfil" o si el usuario está editando su propio perfil, permitir la edición.
             navigate(`/edit-user/${user.id}`);
+        } else {
+            // Si el usuario no tiene permiso, puedes mostrar un error o bloquear la acción.
+            setError('No tienes permiso para editar este perfil.');
         }
     };
+    
 
     const handleOpenPasswordModal = () => {
         setPasswordModalOpen(true);
