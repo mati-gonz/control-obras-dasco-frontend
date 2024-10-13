@@ -81,7 +81,7 @@ const UserDetails = () => {
                             </button>
                             <button
                                 onClick={handleOpenPasswordModal}
-                                className="bg-blue-500 text-white py-2 px-4 rounded ml-4 text-sm hover:bg-blue-600 transition duration-200"
+                                className="bg-blue-500 text-white py-2 px-4 rounded text-sm hover:bg-blue-600 transition duration-200"
                             >
                                 Cambiar Contraseña
                             </button>

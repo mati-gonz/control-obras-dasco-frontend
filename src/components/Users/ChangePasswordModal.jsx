@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Modal, Box, Button, TextField, Typography } from '@mui/material';
-import axiosInstance from '../../services/axiosInstance';  // Usar axiosInstance para manejar el token automáticamente
+import { Modal, Box, Button, TextField, Typography, IconButton, InputAdornment } from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material'; // Importamos los íconos para el ojo
+import axiosInstance from '../../services/axiosInstance';
 
 const ChangePasswordModal = ({ open, handleClose, userId }) => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -8,6 +9,9 @@ const ChangePasswordModal = ({ open, handleClose, userId }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false); // Para alternar visibilidad de la contraseña actual
+  const [showNewPassword, setShowNewPassword] = useState(false); // Para alternar visibilidad de la nueva contraseña
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Para alternar visibilidad de la confirmación de contraseña
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -28,10 +32,15 @@ const ChangePasswordModal = ({ open, handleClose, userId }) => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      handleClose(); // Cerrar el modal después de actualizar la contraseña exitosamente
     } catch (error) {
       setError('Error al actualizar la contraseña. Verifica tu contraseña actual.');
       console.error(error);
     }
+  };
+
+  const toggleShowPassword = (setShow) => {
+    setShow((show) => !show);
   };
 
   return (
@@ -52,30 +61,63 @@ const ChangePasswordModal = ({ open, handleClose, userId }) => {
         <form onSubmit={handleSubmit}>
           <TextField
             label="Contraseña Actual"
-            type="password"
+            type={showCurrentPassword ? "text" : "password"} // Cambiar entre mostrar texto o asteriscos
             fullWidth
             margin="normal"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => toggleShowPassword(setShowCurrentPassword)}
+                  >
+                    {showCurrentPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
           />
           <TextField
             label="Nueva Contraseña"
-            type="password"
+            type={showNewPassword ? "text" : "password"} // Cambiar entre mostrar texto o asteriscos
             fullWidth
             margin="normal"
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => toggleShowPassword(setShowNewPassword)}
+                  >
+                    {showNewPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
           />
           <TextField
             label="Confirmar Nueva Contraseña"
-            type="password"
+            type={showConfirmPassword ? "text" : "password"} // Cambiar entre mostrar texto o asteriscos
             fullWidth
             margin="normal"
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => toggleShowPassword(setShowConfirmPassword)}
+                  >
+                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              )
+            }}
           />
           <Box mt={2} display="flex" justifyContent="space-between">
             <Button onClick={handleClose} color="secondary">Cancelar</Button>
