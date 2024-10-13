@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useParams, useLocation } from 'react-router-dom';
 import {
   Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  Button, TextField, InputLabel, Modal, Box, CircularProgress
+  Button, TextField, InputLabel, Modal, Box
 } from '@mui/material';
 import { format } from 'date-fns';
 import Zoom from 'react-medium-image-zoom';
@@ -87,7 +87,6 @@ const PartDetail = () => {
   const { userRole, currentUserId } = location.state || {};
   const [part, setPart] = useState(null);
   const [expenses, setExpenses] = useState([]);
-  const [isLoading, setIsLoading] = useState(false); // Nuevo estado de carga
   const [newExpense, setNewExpense] = useState({
     amount: '',
     description: '',
@@ -169,7 +168,6 @@ const PartDetail = () => {
 // Función para manejar la creación o edición de un gasto
 const handleSaveExpense = async (e) => {
   e.preventDefault();
-  setIsLoading(true); // Inicia el estado de carga
   let formData = new FormData();
 
   formData.append('amount', newExpense.amount);
@@ -185,7 +183,6 @@ const handleSaveExpense = async (e) => {
   // Guardar el gasto (crear o actualizar)
   await saveExpense(formData, isEditMode, partId, selectedExpenseId);
 
-  setIsLoading(false); // Finaliza el estado de carga
   setIsModalOpen(false);
   setIsEditMode(false);
   setNewExpense({
@@ -343,8 +340,8 @@ const handleSaveExpense = async (e) => {
 
             {/* Aquí se aplica el cambio */}
             <div className="flex items-center justify-between">
-              <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
-                {isLoading ? <CircularProgress size={28} sx={{ color: 'white' }} /> : (isEditMode ? 'Guardar Cambios' : 'Agregar Gasto')}
+              <Button type="submit" variant="contained" color="primary">
+                {isEditMode ? 'Guardar Cambios' : 'Agregar Gasto'}
               </Button>
               <Button onClick={() => setIsModalOpen(false)} variant="contained" color="secondary">
                 Cancelar
