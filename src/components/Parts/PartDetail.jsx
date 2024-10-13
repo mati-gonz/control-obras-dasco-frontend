@@ -73,6 +73,13 @@ const saveExpense = async (expenseData, isEditMode, partId, selectedExpenseId) =
   }
 };
 
+const formatDateToChileTimezone = (date) => {
+  const localDate = new Date(date);
+  localDate.setHours(localDate.getHours() - 3);  // Ajustar la diferencia horaria de UTC-3
+  return localDate.toISOString().split("T")[0];  // Obtener solo la fecha "yyyy-MM-dd"
+};
+
+
 const PartDetail = () => {
   const { partId } = useParams();
   const location = useLocation();
@@ -130,14 +137,20 @@ const PartDetail = () => {
   const handleEditExpense = (expense) => {
     setIsEditMode(true);
     setSelectedExpenseId(expense.id);
+  
+    // Formatear la fecha correctamente al horario de Chile (UTC-3)
+    const formattedDate = formatDateToChileTimezone(expense.date);
+  
     setNewExpense({
       amount: expense.amount,
       description: expense.description,
-      date: expense.date,
+      date: formattedDate,  // Asignar la fecha formateada
       receipt: null,
     });
+  
     setIsModalOpen(true);
   };
+  
 
   // Función para manejar la creación o edición de un gasto
   const handleSaveExpense = async (e) => {
@@ -284,10 +297,11 @@ const PartDetail = () => {
                 value={newExpense.date}
                 onChange={handleInputChange}
                 InputLabelProps={{ shrink: true }}
-                inputProps={{ max: new Date().toISOString().split("T")[0] }}
+                inputProps={{ max: formatDateToChileTimezone(new Date()) }}  // Ajustar el valor máximo a UTC-3
                 required
               />
             </div>
+
             <div className="mb-4">
               <InputLabel htmlFor="receipt">Subir Recibo</InputLabel>
               <input id="receipt" type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={handleFileChange} />
