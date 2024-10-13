@@ -74,13 +74,6 @@ const saveExpense = async (expenseData, isEditMode, partId, selectedExpenseId) =
   }
 };
 
-const formatDateToChileTimezone = (date) => {
-  const localDate = new Date(date);
-  localDate.setHours(localDate.getHours() - 3);  // Ajustar la diferencia horaria de UTC-3
-  return localDate.toISOString().split("T")[0];  // Obtener solo la fecha "yyyy-MM-dd"
-};
-
-
 const PartDetail = () => {
   const { partId } = useParams();
   const location = useLocation();
@@ -146,23 +139,24 @@ const PartDetail = () => {
     });
   };
 
-  // Función para abrir el modal de edición
-  const handleEditExpense = (expense) => {
+// Función para abrir el modal de edición
+const handleEditExpense = (expense) => {
     setIsEditMode(true);
     setSelectedExpenseId(expense.id);
-  
-    // Formatear la fecha correctamente al horario de Chile (UTC-3)
-    const formattedDate = formatDateToChileTimezone(expense.date);
-  
+
+    // Formatear la fecha correctamente para el campo de fecha
+    const formattedDate = new Date(expense.date).toISOString().split("T")[0];
+
     setNewExpense({
       amount: expense.amount,
       description: expense.description,
-      date: formattedDate,  // Asignar la fecha formateada
+      date: formattedDate,  // Asignar la fecha formateada en formato ISO sin modificar horas
       receipt: null,
     });
-  
+
     setIsModalOpen(true);
   };
+
   
 
 // Función para manejar la creación o edición de un gasto
@@ -328,7 +322,7 @@ const handleSaveExpense = async (e) => {
                 value={newExpense.date}
                 onChange={handleInputChange}
                 InputLabelProps={{ shrink: true }}
-                inputProps={{ max: formatDateToChileTimezone(new Date()) }}  // Ajustar el valor máximo a UTC-3
+                inputProps={{ max: new Date().toISOString().split("T")[0] }}  // Ajustar el valor máximo a la fecha actual
                 required
               />
             </div>
