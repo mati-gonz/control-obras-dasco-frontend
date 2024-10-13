@@ -1,3 +1,4 @@
+// src/App.jsx
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Layout from './components/Layout/Layout';
 import Dashboard from './components/WorksDashboard/Dashboard';
@@ -10,7 +11,7 @@ import EditWork from './components/WorksDashboard/EditWork';
 import CreateWork from './components/WorksDashboard/CreateWork';
 import WorkDetail from './components/WorksDashboard/WorkDetail';
 import PartDetail from './components/Parts/PartDetail';
-import PrivateRoute from './PrivateRoute';  // Importar el PrivateRoute
+import PrivateRoute from './PrivateRoute';
 
 function App() {
     return (
@@ -30,6 +31,7 @@ function App() {
                     <Route path="create-work" element={<CreateWork />} />
                     <Route path="work/:id/details" element={<WorkDetail />} />
                     <Route path="/parts/:partId/detail" element={<PartDetail />} />
+                    <Route path="/me" element={<UserDetail />} />
                 </Route>
             </Routes>
         </Router>
