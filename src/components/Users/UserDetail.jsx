@@ -3,11 +3,13 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import axiosInstance from '../../services/axiosInstance'; // Usar axiosInstance para manejar el token
 import ChangePasswordModal from './ChangePasswordModal';
+import { useAuth } from '../../context/useAuth';  // Importar el contexto de autenticación
 
 const UserDetails = () => {
     const { id } = useParams();  // Obtener el ID desde la URL
     const navigate = useNavigate();
     const location = useLocation();
+    const { user: loggedInUser } = useAuth();  // Obtener el usuario autenticado desde el contexto
     const isProfileView = location.pathname === '/me'; 
     const [user, setUser] = useState(null);
     const [works, setWorks] = useState([]);
@@ -18,7 +20,7 @@ const UserDetails = () => {
         const fetchUserData = async () => {
             try {
                 let response;
-
+    
                 // Si es la vista de "Mi Perfil", llama a /me
                 if (isProfileView) {
                     response = await axiosInstance.get('/users/me');
@@ -26,16 +28,18 @@ const UserDetails = () => {
                     // Si es admin viendo otro perfil, usa el ID de la URL
                     response = await axiosInstance.get(`/users/${id}`);
                 }
-
-                setUser(response.data);
-                setWorks(response.data.works || []);
+    
+                setUser(response.data); // Asegúrate de que los datos estén correctamente en `response.data`
+                setWorks(response.data.works || []); // Verifica si los datos son correctos
             } catch (error) {
                 console.error('Error fetching user data:', error);
                 setError('Error al obtener los detalles del usuario.');
             }
         };
-
-        fetchUserData();
+    
+        if (id) { // Verifica si `id` tiene un valor válido antes de hacer la petición
+            fetchUserData();
+        }
     }, [id, isProfileView]);
 
     if (error) {
@@ -45,17 +49,6 @@ const UserDetails = () => {
     if (!user) {
         return <div>Cargando...</div>;
     }
-
-    const handleEdit = () => {
-        if (isProfileView || (user.id === id)) {
-            // Si es la vista de "Mi Perfil" o si el usuario está editando su propio perfil, permitir la edición.
-            navigate(`/edit-user/${user.id}`);
-        } else {
-            // Si el usuario no tiene permiso, puedes mostrar un error o bloquear la acción.
-            setError('No tienes permiso para editar este perfil.');
-        }
-    };
-    
 
     const handleOpenPasswordModal = () => {
         setPasswordModalOpen(true);
@@ -77,13 +70,15 @@ const UserDetails = () => {
                     </div>
                     {isProfileView && (
                         <div className="flex flex-col space-y-4">
-                            <button
-                                onClick={handleEdit}
-                                className="bg-yellow-500 text-white py-2 px-4 rounded text-sm hover:bg-yellow-600 transition duration-200"
-                                style={{ width: 'fit-content', alignSelf: 'flex-start' }}
-                            >
-                                Editar
-                            </button>
+                            {loggedInUser.role === 'admin' && (
+                                <button
+                                    onClick={() => navigate(`/edit-user/${user.id}`)}
+                                    className="bg-yellow-500 text-white py-2 px-4 rounded text-sm hover:bg-yellow-600 transition duration-200"
+                                    style={{ width: 'fit-content', alignSelf: 'flex-start' }}
+                                >
+                                    Editar
+                                </button>
+                            )}
                             <button
                                 onClick={handleOpenPasswordModal}
                                 className="bg-blue-500 text-white py-2 px-4 rounded text-sm hover:bg-blue-600 transition duration-200"
