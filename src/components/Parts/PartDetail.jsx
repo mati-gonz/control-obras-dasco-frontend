@@ -50,22 +50,17 @@ const downloadReceipt = async (expenseId, download = false) => {
   }
 };
 
-// Función para manejar la creación o actualización de gastos
 const saveExpense = async (expenseData, isEditMode, partId, selectedExpenseId) => {
   try {
     if (isEditMode) {
       // Actualizar el gasto existente
-      await axiosInstance.put(`/expenses/expenses/${selectedExpenseId}`, expenseData, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      await axiosInstance.put(`/expenses/${selectedExpenseId}`, expenseData, {
+        // No es necesario agregar el encabezado Content-Type si estás usando FormData
       });
     } else {
       // Crear un nuevo gasto
       await axiosInstance.post(`/expenses/parts/${partId}/expenses`, expenseData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+        // No es necesario agregar el encabezado Content-Type si estás usando FormData
       });
     }
   } catch (error) {
