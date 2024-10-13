@@ -12,7 +12,7 @@ import 'react-medium-image-zoom/dist/styles.css';
 // Utilidad para formatear números
 const formatNumber = (num) => parseFloat(num).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// Función para descargar recibos
+// Utilidad para formatear números
 const downloadReceipt = async (expenseId, download = false) => {
   try {
     // Obtener la URL firmada y la extensión del archivo desde el backend
@@ -20,12 +20,20 @@ const downloadReceipt = async (expenseId, download = false) => {
     const signedUrl = response.data.signedUrl;
     const fileExtension = response.data.fileExtension; // Obtenemos la extensión del archivo
 
-    // Verificar el tipo de archivo utilizando la extensión, no la URL
+    // Si es descarga, realizar la solicitud del archivo con fetch
     if (download) {
+      const blobResponse = await fetch(signedUrl); // Hacer la solicitud de descarga con fetch
+      const blob = await blobResponse.blob(); // Obtener el blob del archivo
+
+      // Crear un enlace temporal para descargar el archivo
+      const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = signedUrl;
+      a.href = url;
       a.download = `recibo-${expenseId}.${fileExtension}`; // Usar la extensión aquí
-      a.click();
+      document.body.appendChild(a); // Añadir el enlace temporal al cuerpo
+      a.click(); // Simular un clic en el enlace para iniciar la descarga
+      document.body.removeChild(a); // Eliminar el enlace del DOM
+      window.URL.revokeObjectURL(url); // Revocar el objeto URL para liberar memoria
     } else if (fileExtension === 'pdf') {
       window.open(signedUrl, '_blank'); // Abrir PDF en una nueva pestaña
     } else if (['jpg', 'jpeg', 'png'].includes(fileExtension)) {
