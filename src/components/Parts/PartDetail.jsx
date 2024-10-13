@@ -344,7 +344,7 @@ const handleSaveExpense = async (e) => {
             {/* Aquí se aplica el cambio */}
             <div className="flex items-center justify-between">
               <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
-                {isLoading ? <CircularProgress size={24} /> : (isEditMode ? 'Guardar Cambios' : 'Agregar Gasto')}
+                {isLoading ? <CircularProgress size={28} sx={{ color: 'white' }} /> : (isEditMode ? 'Guardar Cambios' : 'Agregar Gasto')}
               </Button>
               <Button onClick={() => setIsModalOpen(false)} variant="contained" color="secondary">
                 Cancelar
