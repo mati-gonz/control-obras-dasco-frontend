@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useParams, useLocation } from 'react-router-dom';
 import {
   Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
-  Button, TextField, InputLabel, Modal, Box
+  Button, TextField, InputLabel, Modal, Box, CircularProgress
 } from '@mui/material';
 import { format } from 'date-fns';
 import Zoom from 'react-medium-image-zoom';
@@ -87,6 +87,7 @@ const PartDetail = () => {
   const { userRole, currentUserId } = location.state || {};
   const [part, setPart] = useState(null);
   const [expenses, setExpenses] = useState([]);
+  const [isLoading, setIsLoading] = useState(false); // Nuevo estado de carga
   const [newExpense, setNewExpense] = useState({
     amount: '',
     description: '',
@@ -165,34 +166,37 @@ const PartDetail = () => {
   };
   
 
-  // Función para manejar la creación o edición de un gasto
-  const handleSaveExpense = async (e) => {
-    e.preventDefault();
-    let formData = new FormData();
+// Función para manejar la creación o edición de un gasto
+const handleSaveExpense = async (e) => {
+  e.preventDefault();
+  setIsLoading(true); // Inicia el estado de carga
+  let formData = new FormData();
 
-    formData.append('amount', newExpense.amount);
-    formData.append('description', newExpense.description);
-    formData.append('date', newExpense.date);
-    formData.append('userId', currentUserId); // Agregar el userId al FormData
+  formData.append('amount', newExpense.amount);
+  formData.append('description', newExpense.description);
+  formData.append('date', newExpense.date);
+  formData.append('userId', currentUserId); // Agregar el userId al FormData
 
-    // Añadir archivo si está presente
-    if (newExpense.receipt) {
-      formData.append('receipt', newExpense.receipt);
-    }
+  // Añadir archivo si está presente
+  if (newExpense.receipt) {
+    formData.append('receipt', newExpense.receipt);
+  }
 
-    // Guardar el gasto (crear o actualizar)
-    await saveExpense(formData, isEditMode, partId, selectedExpenseId);
+  // Guardar el gasto (crear o actualizar)
+  await saveExpense(formData, isEditMode, partId, selectedExpenseId);
 
-    setIsModalOpen(false);
-    setIsEditMode(false);
-    setNewExpense({
-      amount: '',
-      description: '',
-      date: '',
-      receipt: null,
-    });
-    fetchPartDetails(); // Recargar detalles de la partida y los gastos
-  };
+  setIsLoading(false); // Finaliza el estado de carga
+  setIsModalOpen(false);
+  setIsEditMode(false);
+  setNewExpense({
+    amount: '',
+    description: '',
+    date: '',
+    receipt: null,
+  });
+  fetchPartDetails(); // Recargar detalles de la partida y los gastos
+};
+
 
   // Función para eliminar un gasto
   const handleDeleteExpense = async (expenseId) => {
@@ -305,14 +309,14 @@ const PartDetail = () => {
           <form onSubmit={handleSaveExpense}>
             <div className="mb-4">
               <TextField
-                  label="Monto"
-                  variant="outlined"
-                  fullWidth
-                  name="amount"
-                  value={formattedAmount}  // Mostrar el monto formateado
-                  onChange={handleInputChange}  // Manejar el cambio de valor
-                  required
-                />
+                label="Monto"
+                variant="outlined"
+                fullWidth
+                name="amount"
+                value={formattedAmount}  // Mostrar el monto formateado
+                onChange={handleInputChange}  // Manejar el cambio de valor
+                required
+              />
             </div>
             <div className="mb-4">
               <TextField label="Descripción" variant="outlined" fullWidth name="description" value={newExpense.description} onChange={handleInputChange} />
@@ -336,9 +340,11 @@ const PartDetail = () => {
               <InputLabel htmlFor="receipt">Subir Recibo</InputLabel>
               <input id="receipt" type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={handleFileChange} />
             </div>
+
+            {/* Aquí se aplica el cambio */}
             <div className="flex items-center justify-between">
-              <Button type="submit" variant="contained" color="primary">
-                {isEditMode ? 'Guardar Cambios' : 'Agregar Gasto'}
+              <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
+                {isLoading ? <CircularProgress size={24} /> : (isEditMode ? 'Guardar Cambios' : 'Agregar Gasto')}
               </Button>
               <Button onClick={() => setIsModalOpen(false)} variant="contained" color="secondary">
                 Cancelar
