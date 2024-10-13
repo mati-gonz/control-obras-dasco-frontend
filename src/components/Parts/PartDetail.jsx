@@ -17,7 +17,6 @@ const downloadReceipt = async (expenseId, download = false) => {
   try {
     // Obtener la URL firmada y la extensión del archivo desde el backend
     const response = await axiosInstance.get(`/expenses/${expenseId}/receipt`);
-    console.log('DATA:', response.data);
     const signedUrl = response.data.signedUrl;
     const fileExtension = response.data.fileExtension; // Obtenemos la extensión del archivo
 
@@ -140,6 +139,7 @@ const PartDetail = () => {
     formData.append('amount', newExpense.amount);
     formData.append('description', newExpense.description);
     formData.append('date', newExpense.date);
+    formData.append('userId', currentUserId); // Agregar el userId al FormData
 
     // Añadir archivo si está presente
     if (newExpense.receipt) {
@@ -205,7 +205,7 @@ const PartDetail = () => {
                 <TableCell>${formatNumber(expense.amount)}</TableCell>
                 <TableCell>{expense.description}</TableCell>
                 <TableCell>{format(new Date(expense.date), 'dd/MM/yyyy')}</TableCell>
-                <TableCell>{expense.user?.name || 'Desconocido'}</TableCell>
+                <TableCell>{expense.User?.name || 'Desconocido'}</TableCell> {/* Mostrar el nombre del usuario */}
                 <TableCell>
                   {expense.receiptUrl ? (
                     <>
