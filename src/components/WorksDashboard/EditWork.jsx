@@ -9,6 +9,7 @@ const EditWork = () => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [totalBudget, setTotalBudget] = useState('');
+    const [formattedBudget, setFormattedBudget] = useState('');  // Mantén el valor formateado
     const [adminId, setAdminId] = useState('');
     const [users, setUsers] = useState([]);
     const [error, setError] = useState('');
@@ -17,33 +18,27 @@ const EditWork = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Si el usuario no está autenticado, redirige al login
         if (!user) {
             navigate('/');
             return;
         }
 
-        // Obtener los datos de la obra y los usuarios
         const fetchData = async () => {
             try {
-                // Obtener los datos de la obra
                 const workResponse = await axiosInstance.get(`/works/${id}`);
                 const { name, startDate, endDate, totalBudget, adminId } = workResponse.data;
-                
-                // Establecer los datos en el estado
                 setName(name);
                 setStartDate(startDate ? new Date(startDate).toISOString().split('T')[0] : '');
                 setEndDate(endDate ? new Date(endDate).toISOString().split('T')[0] : '');
                 setTotalBudget(totalBudget);
+                setFormattedBudget(formatNumberWithDots(totalBudget.toString())); // Formatea el presupuesto inicial
                 setAdminId(adminId);
 
-                // Obtener la lista de usuarios para el select
                 const usersResponse = await axiosInstance.get('/users');
                 setUsers(usersResponse.data.data);
             } catch (error) {
                 console.error('Error al obtener los datos', error);
                 setError('Error al obtener los datos de la obra o los usuarios.');
-
                 if (error.response && error.response.status === 401) {
                     logout(); // Si hay un error de autenticación (401), cerrar sesión
                 }
@@ -53,13 +48,24 @@ const EditWork = () => {
         fetchData();
     }, [id, user, navigate, logout]);
 
+    // Función para formatear el número con puntos
+    const formatNumberWithDots = (number) => {
+        return number.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
+    // Función para manejar cambios en el campo de presupuesto
+    const handleBudgetChange = (e) => {
+        const value = e.target.value;
+        setFormattedBudget(formatNumberWithDots(value)); // Actualiza el valor formateado
+        setTotalBudget(value.replace(/\./g, ''));  // Elimina los puntos para mantener el número "limpio"
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
 
         try {
-            // Actualizar la obra en la API
             await axiosInstance.put(`/works/${id}`, {
                 name,
                 startDate,
@@ -68,23 +74,20 @@ const EditWork = () => {
                 adminId, // ID del usuario encargado seleccionado
             });
             setSuccess('Obra actualizada con éxito');
-
-            // Redirigir al dashboard después de la actualización
             setTimeout(() => {
                 navigate('/dashboard');
-            }, 500); // Espera 1.5 segundos antes de redirigir
+            }, 500); 
         } catch (error) {
             setError('Error al actualizar la obra. Intente nuevamente.');
             console.error(error);
-
             if (error.response && error.response.status === 401) {
-                logout(); // Si hay un error de autenticación (401), cerrar sesión
+                logout(); 
             }
         }
     };
 
     const handleBack = () => {
-        navigate('/dashboard'); // Redirige al dashboard
+        navigate('/dashboard');
     };
 
     return (
@@ -128,9 +131,9 @@ const EditWork = () => {
                     <div className="mb-4">
                         <label className="block text-gray-700">Presupuesto Total:</label>
                         <input
-                            type="number"
-                            value={totalBudget}
-                            onChange={(e) => setTotalBudget(e.target.value)}
+                            type="text"  // Cambiamos a texto para permitir la inserción de puntos
+                            value={formattedBudget}
+                            onChange={handleBudgetChange}
                             className="w-full p-2 border border-gray-300 rounded mt-1"
                             required
                         />

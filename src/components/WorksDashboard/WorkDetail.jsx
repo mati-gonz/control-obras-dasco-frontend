@@ -34,12 +34,25 @@ const WorkDetail = () => {
     const [subgroups, setSubgroups] = useState([]);
     const [uncategorizedParts, setUncategorizedParts] = useState([]);
     const [newPartName, setNewPartName] = useState('');
-    const [newPartBudget, setNewPartBudget] = useState('');
+    const [newPartBudget, setNewPartBudget] = useState('');  // Mantén el presupuesto sin formatear
+    const [formattedPartBudget, setFormattedPartBudget] = useState(''); // Para mostrar el presupuesto formateado
     const [selectedSubgroup, setSelectedSubgroup] = useState('');
     const [newSubgroupName, setNewSubgroupName] = useState('');
     const [newSubgroupBudget, setNewSubgroupBudget] = useState('');
     const [isSubgroupModalOpen, setIsSubgroupModalOpen] = useState(false);
     const [value, setValue] = useState(0); // Estado para las pestañas
+
+    // Función para formatear números con puntos
+    const formatNumberWithDots = (number) => {
+        return number.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
+    // Función para manejar el cambio en el presupuesto de la nueva partida
+    const handleBudgetChange = (e) => {
+        const value = e.target.value;
+        setFormattedPartBudget(formatNumberWithDots(value)); // Actualiza el valor formateado
+        setNewPartBudget(value.replace(/\./g, ''));  // Elimina los puntos y almacena el valor limpio
+    };
 
     useEffect(() => {
         fetchWorkDetails();
@@ -97,14 +110,15 @@ const WorkDetail = () => {
         try {
             const newPart = {
                 name: newPartName,
-                budget: parseFloat(newPartBudget),
+                budget: parseFloat(newPartBudget),  // Usar el valor sin formatear
                 subgroupId: selectedSubgroup || null,
                 workId: id,
             };
 
             await axiosInstance.post(`/parts/${id}/parts`, newPart);
             setNewPartName('');
-            setNewPartBudget('');
+            setFormattedPartBudget('');  // Resetea el presupuesto formateado
+            setNewPartBudget('');  // Resetea el presupuesto sin formatear
             setSelectedSubgroup('');
             fetchWorkDetails();
         } catch (error) {
@@ -286,9 +300,8 @@ const WorkDetail = () => {
                             label="Presupuesto"
                             variant="outlined"
                             fullWidth
-                            type="number"
-                            value={newPartBudget}
-                            onChange={(e) => setNewPartBudget(e.target.value)}
+                            value={formattedPartBudget}  // Usa el valor formateado
+                            onChange={handleBudgetChange}  // Formatea el valor en tiempo real
                             required
                         />
                     </div>
@@ -318,6 +331,15 @@ const WorkDetail = () => {
                         </Button>
                     </div>
                 </form>
+            </div>
+
+            <div className="flex justify-start mt-6">
+                <button
+                    onClick={() => navigate('/dashboard')}
+                    className="bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300 transition duration-200"
+                >
+                    Volver
+                </button>
             </div>
 
             <Modal open={isSubgroupModalOpen} onClose={() => setIsSubgroupModalOpen(false)}>

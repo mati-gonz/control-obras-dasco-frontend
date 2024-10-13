@@ -1,22 +1,31 @@
 // src/components/Dashboard/UserDetails.jsx
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import axiosInstance from '../../services/axiosInstance'; // Usar axiosInstance para manejar el token automáticamente
 import { useAuth } from '../../context/useAuth';  // Usar contexto de autenticación
+import ChangePasswordModal from './ChangePasswordModal';  // Importar el componente del modal de cambio de contraseña
 
-const UserDetails = () => {
+const UserDetail = ({ isMe }) => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user: loggedInUser } = useAuth();  // Obtener el usuario autenticado desde el contexto
+    const { user: loggedInUser, loading } = useAuth();  // Obtener el usuario autenticado y el estado de carga desde el contexto
     const [user, setUser] = useState(null);
     const [works, setWorks] = useState([]);
     const [error, setError] = useState('');
+    const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);  // Estado para el modal de cambiar contraseña
 
     useEffect(() => {
+        // No hacer la llamada a la API si el usuario está cargando
+        if (loading || !loggedInUser) {
+            return;
+        }
+
         const fetchUserData = async () => {
             try {
-                // Obtener detalles del usuario
-                const userResponse = await axiosInstance.get(`/users/${id}`);
+                const userResponse = isMe 
+                    ? await axiosInstance.get(`/users/${loggedInUser.id}`) 
+                    : await axiosInstance.get(`/users/${id}`);
                 setUser(userResponse.data.data);
                 setWorks(userResponse.data.data.works || []);
             } catch (error) {
@@ -26,13 +35,15 @@ const UserDetails = () => {
         };
 
         fetchUserData();
-    }, [id]);
-
+    }, [id, isMe, loggedInUser, loading]);
+    
+    // Mostrar mensaje de error si ocurre
     if (error) {
         return <div>{error}</div>;
     }
 
-    if (!user) {
+    // Mostrar un indicador de carga si el usuario aún está cargando o si no hay datos de usuario
+    if (loading || !user) {
         return <div>Cargando...</div>;
     }
 
@@ -48,6 +59,18 @@ const UserDetails = () => {
             console.error('Error deleting user:', error);
             setError('Error al eliminar el usuario.');
         }
+    };
+
+    const handleReturn = () => {
+        isMe ? navigate('/dashboard') : navigate('/user-management');
+    };
+
+    const handleOpenPasswordModal = () => {
+        setPasswordModalOpen(true);
+    };
+
+    const handleClosePasswordModal = () => {
+        setPasswordModalOpen(false);
     };
 
     return (
@@ -79,6 +102,15 @@ const UserDetails = () => {
                             </button>
                         </div>
                     )}
+                    {isMe && (
+                        <button
+                            onClick={handleOpenPasswordModal}
+                            className="bg-blue-500 text-white py-2 px-4 rounded text-sm hover:bg-blue-600 transition duration-200"
+                            style={{ width: 'fit-content', alignSelf: 'flex-start' }}
+                        >
+                            Cambiar Contraseña
+                        </button>
+                    )}
                 </div>
             </div>
 
@@ -100,14 +132,25 @@ const UserDetails = () => {
 
             {/* Botón de volver */}
             <button
-                onClick={() => navigate('/user-management')}
+                onClick={handleReturn}
                 className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-200"
                 style={{ width: 'fit-content', alignSelf: 'flex-start' }}
             >
                 Volver
             </button>
+
+            {/* Modal para cambiar contraseña */}
+            <ChangePasswordModal
+                open={isPasswordModalOpen}
+                handleClose={handleClosePasswordModal}
+                userId={loggedInUser.id}  // Pasar el ID del usuario autenticado
+            />
         </div>
     );
 };
 
-export default UserDetails;
+UserDetail.propTypes = {
+    isMe: PropTypes.bool,  // Definir el tipo de isMe como boolean
+};
+
+export default UserDetail;

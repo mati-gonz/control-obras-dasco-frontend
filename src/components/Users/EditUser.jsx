@@ -65,7 +65,7 @@ const EditUser = () => {
 
     // Manejar el botón "Volver" que redirige al User Management sin actualizar
     const handleBack = () => {
-        navigate('/user-management');
+        navigate(`/users/${id}/details`);
     };
 
     return (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import axiosInstance from '../../services/axiosInstance';
+import { useNavigate } from 'react-router-dom';
 import { useParams, useLocation } from 'react-router-dom';
 import {
   Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper,
@@ -8,6 +9,11 @@ import {
 import { format } from 'date-fns';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
+
+// Función para formatear montos con puntos
+const formatNumberWithDots = (number) => {
+  return number.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+};
 
 // Utilidad para formatear números
 const formatNumber = (num) => parseFloat(num).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -87,6 +93,8 @@ const PartDetail = () => {
     date: '',
     receipt: null,
   });
+  const [formattedAmount, setFormattedAmount] = useState('');
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedExpenseId, setSelectedExpenseId] = useState(null);
@@ -113,10 +121,20 @@ const PartDetail = () => {
   // Función para manejar cambios en los campos de entrada
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setNewExpense({
-      ...newExpense,
-      [name]: value,
-    });
+
+    if (name === 'amount') {
+      const formattedValue = formatNumberWithDots(value);
+      setFormattedAmount(formattedValue);  // Actualiza el valor formateado
+      setNewExpense({
+        ...newExpense,
+        amount: value.replace(/\./g, '')  // Almacena el valor limpio, sin puntos
+      });
+    } else {
+      setNewExpense({
+        ...newExpense,
+        [name]: value,
+      });
+    }
   };
 
   // Función para manejar cambios en el archivo seleccionado
@@ -269,6 +287,15 @@ const PartDetail = () => {
         Agregar Gasto
       </Button>
 
+      <div className="flex justify-start mt-6">
+          <button
+              onClick={() => navigate(`/work/${part.workId}/details`)}
+              className="bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300 transition duration-200"
+          >
+              Volver
+          </button>
+      </div>
+
       {/* Modal para crear o editar un gasto */}
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <div className="bg-white p-6 rounded-lg shadow-lg mt-6" style={{ margin: '10% auto', width: '400px' }}>
@@ -277,7 +304,15 @@ const PartDetail = () => {
           </Typography>
           <form onSubmit={handleSaveExpense}>
             <div className="mb-4">
-              <TextField label="Monto" variant="outlined" fullWidth type="number" name="amount" value={newExpense.amount} onChange={handleInputChange} required />
+              <TextField
+                  label="Monto"
+                  variant="outlined"
+                  fullWidth
+                  name="amount"
+                  value={formattedAmount}  // Mostrar el monto formateado
+                  onChange={handleInputChange}  // Manejar el cambio de valor
+                  required
+                />
             </div>
             <div className="mb-4">
               <TextField label="Descripción" variant="outlined" fullWidth name="description" value={newExpense.description} onChange={handleInputChange} />

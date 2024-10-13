@@ -31,7 +31,7 @@ function App() {
                     <Route path="create-work" element={<CreateWork />} />
                     <Route path="work/:id/details" element={<WorkDetail />} />
                     <Route path="/parts/:partId/detail" element={<PartDetail />} />
-                    <Route path="/me" element={<UserDetail />} />
+                    <Route path="/me" element={<UserDetail isMe={true} />} />
                 </Route>
             </Routes>
         </Router>
