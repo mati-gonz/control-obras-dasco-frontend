@@ -139,25 +139,23 @@ const PartDetail = () => {
     });
   };
 
-// Función para abrir el modal de edición
-const handleEditExpense = (expense) => {
+  // Función para abrir el modal de edición
+  const handleEditExpense = (expense) => {
     setIsEditMode(true);
     setSelectedExpenseId(expense.id);
 
-    // Formatear la fecha correctamente para el campo de fecha
-    const formattedDate = new Date(expense.date).toISOString().split("T")[0];
+    // Formatear la fecha correctamente para el campo de fecha en formato 'YYYY-MM-DD' sin modificar la zona horaria
+    const formattedDate = expense.date.slice(0, 10); // Solo toma la parte 'YYYY-MM-DD'
 
     setNewExpense({
       amount: expense.amount,
       description: expense.description,
-      date: formattedDate,  // Asignar la fecha formateada en formato ISO sin modificar horas
+      date: formattedDate, // Usar la fecha sin modificarla
       receipt: null,
     });
 
     setIsModalOpen(true);
   };
-
-  
 
 // Función para manejar la creación o edición de un gasto
 const handleSaveExpense = async (e) => {
