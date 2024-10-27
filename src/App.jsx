@@ -11,6 +11,9 @@ import EditWork from './components/WorksDashboard/EditWork';
 import CreateWork from './components/WorksDashboard/CreateWork';
 import WorkDetail from './components/WorksDashboard/WorkDetail';
 import PartDetail from './components/Parts/PartDetail';
+import TransferUserList from './components/Transfer/TransferUserList';
+import TransferWorkList from './components/Transfer/TransferWorkList';
+import TransferDetail from './components/Transfer/TransferDetail';
 import PrivateRoute from './PrivateRoute';
 
 function App() {
@@ -32,6 +35,9 @@ function App() {
                     <Route path="work/:id/details" element={<WorkDetail />} />
                     <Route path="/parts/:partId/detail" element={<PartDetail />} />
                     <Route path="/me" element={<UserDetail isMe={true} />} />
+                    <Route path="transfers" element={<TransferUserList />} />
+                    <Route path="transfers/user/:userId" element={<TransferWorkList />} />
+                    <Route path="transfers/user/:userId/work/:workId" element={<TransferDetail />} />
                 </Route>
             </Routes>
         </Router>

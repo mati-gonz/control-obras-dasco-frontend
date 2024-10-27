@@ -1,28 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axiosInstance from '../../services/axiosInstance'; // Usar axiosInstance ya configurada
-import { useAuth } from '../../context/useAuth'; // Usar el contexto de autenticación
+import axiosInstance from '../../services/axiosInstance';
+import { useAuth } from '../../context/useAuth';
 
 const CreateWork = () => {
     const [name, setName] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [totalBudget, setTotalBudget] = useState('');
+    const [formattedBudget, setFormattedBudget] = useState('');
     const [adminId, setAdminId] = useState('');
     const [users, setUsers] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const { user, logout } = useAuth(); // Acceder al usuario y la función de logout desde el contexto
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
-        // Si el usuario no está autenticado, redirige al login
         if (!user) {
             navigate('/');
             return;
         }
 
-        // Obtener la lista de usuarios para seleccionar al encargado
         const fetchUsers = async () => {
             try {
                 const response = await axiosInstance.get('/users');
@@ -30,7 +29,6 @@ const CreateWork = () => {
             } catch (error) {
                 console.error('Error al obtener los usuarios', error);
                 if (error.response && error.response.status === 401) {
-                    // Si hay un error de autenticación (401), cerramos la sesión
                     logout();
                 }
             }
@@ -39,12 +37,21 @@ const CreateWork = () => {
         fetchUsers();
     }, [user, navigate, logout]);
 
+    const formatNumberWithDots = (number) => {
+        return number.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    };
+
+    const handleBudgetChange = (e) => {
+        const value = e.target.value;
+        setFormattedBudget(formatNumberWithDots(value));
+        setTotalBudget(value.replace(/\./g, ''));
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setSuccess('');
 
-        // Validación manual de los campos
         if (!name || !startDate || !endDate || !totalBudget || !adminId) {
             setError('Por favor, complete todos los campos.');
             return;
@@ -56,21 +63,19 @@ const CreateWork = () => {
                 startDate,
                 endDate,
                 totalBudget,
-                adminId, // ID del usuario encargado seleccionado
+                adminId,
             });
 
             setSuccess('Obra creada con éxito');
 
-            // Redirigir al Dashboard después de la creación exitosa
             setTimeout(() => {
                 navigate('/dashboard');
-            }, 500); // Espera 1.5 segundos antes de redirigir
+            }, 500);
         } catch (error) {
             setError('Error al crear la obra. Intente nuevamente.');
             console.error(error);
 
             if (error.response && error.response.status === 401) {
-                // Si hay un error de autenticación (401), cerramos la sesión
                 logout();
             }
         }
@@ -110,16 +115,16 @@ const CreateWork = () => {
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
                             className="w-full p-2 border border-gray-300 rounded mt-1"
-                            min={startDate} // Establecer el mínimo valor seleccionable
+                            min={startDate}
                             required
                         />
                     </div>
                     <div className="mb-4">
                         <label className="block text-gray-700">Presupuesto Total:</label>
                         <input
-                            type="number"
-                            value={totalBudget}
-                            onChange={(e) => setTotalBudget(e.target.value)}
+                            type="text"
+                            value={formattedBudget}
+                            onChange={handleBudgetChange}
                             className="w-full p-2 border border-gray-300 rounded mt-1"
                             required
                         />

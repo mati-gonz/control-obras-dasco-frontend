@@ -7,7 +7,6 @@ import { Tabs, Tab, Box, Typography, Table, TableBody, TableCell, TableContainer
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
-// Componente para renderizar cada tabla
 const TabPanel = ({ children, value, index, ...other }) => {
     return (
         <div
@@ -28,30 +27,30 @@ const TabPanel = ({ children, value, index, ...other }) => {
 
 const WorkDetail = () => {
     const { id } = useParams();
-    const { user } = useAuth();  // Accede a los datos de autenticación
+    const { user } = useAuth();
     const navigate = useNavigate();
     const [work, setWork] = useState(null);
     const [subgroups, setSubgroups] = useState([]);
     const [uncategorizedParts, setUncategorizedParts] = useState([]);
     const [newPartName, setNewPartName] = useState('');
-    const [newPartBudget, setNewPartBudget] = useState('');  // Mantén el presupuesto sin formatear
-    const [formattedPartBudget, setFormattedPartBudget] = useState(''); // Para mostrar el presupuesto formateado
+    const [newPartBudget, setNewPartBudget] = useState('');
+    const [formattedPartBudget, setFormattedPartBudget] = useState('');
     const [selectedSubgroup, setSelectedSubgroup] = useState('');
     const [newSubgroupName, setNewSubgroupName] = useState('');
     const [newSubgroupBudget, setNewSubgroupBudget] = useState('');
+    const [formattedSubgroupBudget, setFormattedSubgroupBudget] = useState(''); 
     const [isSubgroupModalOpen, setIsSubgroupModalOpen] = useState(false);
-    const [value, setValue] = useState(0); // Estado para las pestañas
+    const [value, setValue] = useState(0);
 
-    // Función para formatear números con puntos
     const formatNumberWithDots = (number) => {
         return number.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     };
 
-    // Función para manejar el cambio en el presupuesto de la nueva partida
+
     const handleBudgetChange = (e) => {
         const value = e.target.value;
-        setFormattedPartBudget(formatNumberWithDots(value)); // Actualiza el valor formateado
-        setNewPartBudget(value.replace(/\./g, ''));  // Elimina los puntos y almacena el valor limpio
+        setFormattedPartBudget(formatNumberWithDots(value));
+        setNewPartBudget(value.replace(/\./g, ''));
     };
 
     useEffect(() => {
@@ -110,15 +109,15 @@ const WorkDetail = () => {
         try {
             const newPart = {
                 name: newPartName,
-                budget: parseFloat(newPartBudget),  // Usar el valor sin formatear
+                budget: parseFloat(newPartBudget),
                 subgroupId: selectedSubgroup || null,
                 workId: id,
             };
 
             await axiosInstance.post(`/parts/${id}/parts`, newPart);
             setNewPartName('');
-            setFormattedPartBudget('');  // Resetea el presupuesto formateado
-            setNewPartBudget('');  // Resetea el presupuesto sin formatear
+            setFormattedPartBudget('');
+            setNewPartBudget('');
             setSelectedSubgroup('');
             fetchWorkDetails();
         } catch (error) {
@@ -145,6 +144,12 @@ const WorkDetail = () => {
         }
     };
 
+    const handleSubgroupBudgetChange = (e) => {
+        const value = e.target.value;
+        setFormattedSubgroupBudget(formatNumberWithDots(value));
+        setNewSubgroupBudget(value.replace(/\./g, ''));
+    };
+
     const formatNumber = (num) => {
         return parseFloat(num).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     };
@@ -152,13 +157,12 @@ const WorkDetail = () => {
     const goToPartDetail = (partId) => {
         navigate(`/parts/${partId}/detail`, {
             state: {
-                userRole: user?.role,        // Pasamos el rol del usuario actual
-                currentUserId: user?.id      // Pasamos el ID del usuario actual
+                userRole: user?.role,
+                currentUserId: user?.id
             }
         });
     };
 
-    // Calcula el presupuesto y los gastos totales para "Sin Categoría"
     const calculateUncategorizedTotals = () => {
         const totalBudget = uncategorizedParts.reduce((acc, part) => acc + parseFloat(part.budget), 0);
         const totalSpent = uncategorizedParts.reduce((acc, part) => acc + parseFloat(part.totalSpent), 0);
@@ -174,8 +178,8 @@ const WorkDetail = () => {
                 <div className="mb-6 bg-white p-6 rounded-lg shadow-lg">
                     <h2 className="text-2xl font-bold">{work.name}</h2>
                     <p>Fecha de Inicio: {new Date(work.startDate).toLocaleDateString()}</p>
-                    <p>Fecha de Fin: {work.endDate ? new Date(work.endDate).toLocaleDateString() : 'No especificada'}</p>
-                    <p>Presupuesto Total: ${formatNumber(work.totalBudget)}</p>
+                    <p>Fecha de Finalización: {work.endDate ? new Date(work.endDate).toLocaleDateString() : 'No especificada'}</p>
+                    <p>Presupuesto Total Obra: ${formatNumber(work.totalBudget)}</p>
                 </div>
             )}
 
@@ -203,7 +207,7 @@ const WorkDetail = () => {
             {subgroups.map((subgroup, index) => (
                 <TabPanel key={subgroup.id} value={value} index={index}>
                     <Typography variant="h6">
-                        Presupuesto estimado: ${formatNumber(subgroup.budget)} | Gastado hasta ahora: ${formatNumber(subgroup.accumulatedBudget)}
+                        Presupuesto del ítem: ${formatNumber(subgroup.budget)} | Gastado hasta ahora: ${formatNumber(subgroup.accumulatedSpent)}
                     </Typography>
                     <TableContainer component={Paper}>
                         <Table>
@@ -300,8 +304,8 @@ const WorkDetail = () => {
                             label="Presupuesto"
                             variant="outlined"
                             fullWidth
-                            value={formattedPartBudget}  // Usa el valor formateado
-                            onChange={handleBudgetChange}  // Formatea el valor en tiempo real
+                            value={formattedPartBudget}
+                            onChange={handleBudgetChange}
                             required
                         />
                     </div>
@@ -344,7 +348,7 @@ const WorkDetail = () => {
 
             <Modal open={isSubgroupModalOpen} onClose={() => setIsSubgroupModalOpen(false)}>
                 <div className="bg-white p-6 rounded-lg shadow-lg mt-6" style={{ margin: '10% auto', width: '400px' }}>
-                    <h3 className="text-xl font-bold mb-4">Crear Nueva Categoría</h3>
+                    <h3 className="text-xl font-bold mb-4">Crear Nueva Categoría (Ítem)</h3>
                     <form onSubmit={handleCreateSubgroup}>
                         <div className="mb-4">
                             <TextField
@@ -361,9 +365,8 @@ const WorkDetail = () => {
                                 label="Presupuesto"
                                 variant="outlined"
                                 fullWidth
-                                type="number"
-                                value={newSubgroupBudget}
-                                onChange={(e) => setNewSubgroupBudget(e.target.value)}
+                                value={formattedSubgroupBudget}
+                                onChange={handleSubgroupBudgetChange}
                                 required
                             />
                         </div>
