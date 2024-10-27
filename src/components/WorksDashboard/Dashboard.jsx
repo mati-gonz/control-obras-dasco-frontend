@@ -2,11 +2,14 @@ import { useEffect, useState } from 'react';
 import axiosInstance from '../../services/axiosInstance'; // Usar axiosInstance desde el servicio
 import { useNavigate } from 'react-router-dom';
 import WorkCard from './WorkCard'; // El componente que renderiza las obras
+import ConfirmationModal from '../Common/ConfirmationModal'; // Importa el modal de confirmación
 import { useAuth } from '../../context/useAuth'; // Importar contexto de autenticación
 
 const Dashboard = () => {
     const [works, setWorks] = useState([]);
     const [error, setError] = useState('');
+    const [showModal, setShowModal] = useState(false); // Estado para mostrar el modal
+    const [selectedWork, setSelectedWork] = useState(null); // Obra seleccionada para eliminar
     const { user } = useAuth(); // Obtener usuario desde el contexto
     const navigate = useNavigate();
 
@@ -19,13 +22,11 @@ const Dashboard = () => {
 
             try {
                 const worksResponse = await axiosInstance.get('/works');
-
                 if (Array.isArray(worksResponse.data.data)) {
                     const formattedWorks = worksResponse.data.data.map(work => ({
                         ...work,
                         totalBudget: Number(work.totalBudget), // Asegurarse de que `totalBudget` sea un número
                     }));
-
                     setWorks(formattedWorks); // Guardar las obras en el estado
                 } else {
                     console.error('La respuesta de la API no es un array', worksResponse.data.data);
@@ -42,6 +43,27 @@ const Dashboard = () => {
 
     const handleCreateWork = () => {
         navigate('/create-work'); // Redirige a la página de crear obra
+    };
+
+    // Función para confirmar eliminación
+    const handleDeleteConfirmation = (workId) => {
+        setSelectedWork(workId); // Establecer la obra seleccionada
+        setShowModal(true); // Mostrar el modal de confirmación
+    };
+
+    // Función para eliminar una obra
+    const handleDeleteWork = async () => {
+        if (!selectedWork) return;
+        try {
+            await axiosInstance.delete(`/works/${selectedWork}`); // Llamada DELETE a la API
+            setWorks(works.filter(work => work.id !== selectedWork)); // Actualizar el estado local para quitar la obra eliminada
+            setShowModal(false); // Cerrar el modal tras eliminar
+            setSelectedWork(null); // Limpiar la obra seleccionada
+        } catch (error) {
+            console.error('Error al eliminar la obra:', error);
+            setError('No se pudo eliminar la obra. Intenta nuevamente.');
+            setShowModal(false); // Cerrar el modal aunque ocurra un error
+        }
     };
 
     return (
@@ -82,11 +104,20 @@ const Dashboard = () => {
                                 work={work}
                                 userRole={user?.role}
                                 onEdit={() => navigate(`/edit-work/${work.id}`)}
+                                onDelete={() => handleDeleteConfirmation(work.id)} // Llamar a la función de confirmación
                             />
                         ))}
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Confirmación */}
+            <ConfirmationModal
+                show={showModal}
+                onClose={() => setShowModal(false)}
+                onConfirm={handleDeleteWork}
+                message="¿Estás seguro de que deseas eliminar esta obra?"
+            />
         </div>
     );
 };

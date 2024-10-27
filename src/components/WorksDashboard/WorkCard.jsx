@@ -1,13 +1,13 @@
 import PropTypes from 'prop-types';  // Importa PropTypes para la validación de props
 import { useNavigate } from 'react-router-dom';
-import { FaEye, FaEdit } from 'react-icons/fa';  // Importa los iconos de FontAwesome
+import { FaEye, FaEdit, FaTrash } from 'react-icons/fa';  // Importa los iconos de FontAwesome
 
-const WorkCard = ({ work, userRole, onEdit }) => {
+const WorkCard = ({ work, userRole, onEdit, onDelete }) => {
     const navigate = useNavigate();
 
     // Formatear fecha en formato dd/mm/yyyy
     const formatDate = (dateString) => {
-        if (!dateString) return 'Sin fecha'; // Validar que dateString exista
+        if (!dateString) return 'Sin fecha';
         const date = new Date(dateString);
         const day = String(date.getUTCDate()).padStart(2, '0');
         const month = String(date.getUTCMonth() + 1).padStart(2, '0');
@@ -17,7 +17,7 @@ const WorkCard = ({ work, userRole, onEdit }) => {
 
     // Formatear presupuesto en formato de moneda CLP
     const formatCurrency = (amount) => {
-        if (!amount) return 'Sin presupuesto'; // Validar que amount exista
+        if (!amount) return 'Sin presupuesto';
         return Number(amount).toLocaleString('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 });
     };
 
@@ -28,7 +28,7 @@ const WorkCard = ({ work, userRole, onEdit }) => {
 
     return (
         <div className="bg-white p-4 rounded-lg shadow-lg">
-            <h3 className="text-xl font-bold mb-2">{work.name || 'Sin nombre'}</h3> {/* Validar el nombre */}
+            <h3 className="text-xl font-bold mb-2">{work.name || 'Sin nombre'}</h3>
             <p className="mb-1">Fecha de Inicio: {formatDate(work.startDate)}</p>
             <p className="mb-1">Fecha de Fin: {formatDate(work.endDate)}</p>
             <p className="mb-1">Presupuesto Total: {formatCurrency(work.totalBudget)}</p>
@@ -39,14 +39,22 @@ const WorkCard = ({ work, userRole, onEdit }) => {
                 >
                     <FaEye className="mr-1" /> Ver Detalle
                 </button>
-                {/* Mostrar el botón de Editar solo si el usuario es admin */}
+                {/* Mostrar botones de Editar y Eliminar solo si el usuario es admin */}
                 {userRole === 'admin' && (
-                    <button 
-                        onClick={onEdit} 
-                        className="bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-600 transition duration-200 mr-2 flex items-center"
-                    >
-                        <FaEdit className="mr-1" /> Editar
-                    </button>
+                    <div className="flex">
+                        <button 
+                            onClick={onEdit} 
+                            className="bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-600 transition duration-200 mr-2 flex items-center"
+                        >
+                            <FaEdit className="mr-1" /> Editar
+                        </button>
+                        <button 
+                            onClick={onDelete} 
+                            className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-200 flex items-center"
+                        >
+                            <FaTrash className="mr-1" /> Eliminar
+                        </button>
+                    </div>
                 )}
             </div>
         </div>
@@ -64,6 +72,7 @@ WorkCard.propTypes = {
     }).isRequired,
     userRole: PropTypes.string.isRequired,
     onEdit: PropTypes.func.isRequired,
+    onDelete: PropTypes.func.isRequired, // Validar la prop onDelete
 };
 
 export default WorkCard;
