@@ -1,22 +1,22 @@
 import { useEffect, useState } from 'react';
-import axiosInstance from '../../services/axiosInstance'; // Usar axiosInstance desde el servicio
+import axiosInstance from '../../services/axiosInstance';
 import { useNavigate } from 'react-router-dom';
-import WorkCard from './WorkCard'; // El componente que renderiza las obras
-import ConfirmationModal from '../Common/ConfirmationModal'; // Importa el modal de confirmación
-import { useAuth } from '../../context/useAuth'; // Importar contexto de autenticación
+import WorkCard from './WorkCard';
+import ConfirmationModal from '../Common/ConfirmationModal';
+import { useAuth } from '../../context/useAuth';
 
 const Dashboard = () => {
     const [works, setWorks] = useState([]);
     const [error, setError] = useState('');
-    const [showModal, setShowModal] = useState(false); // Estado para mostrar el modal
-    const [selectedWork, setSelectedWork] = useState(null); // Obra seleccionada para eliminar
-    const { user } = useAuth(); // Obtener usuario desde el contexto
+    const [showModal, setShowModal] = useState(false);
+    const [selectedWork, setSelectedWork] = useState(null);
+    const { user } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
         const fetchUserData = async () => {
             if (!user) {
-                navigate('/'); // Redirigir si no hay usuario autenticado
+                navigate('/');
                 return;
             }
 
@@ -25,9 +25,9 @@ const Dashboard = () => {
                 if (Array.isArray(worksResponse.data.data)) {
                     const formattedWorks = worksResponse.data.data.map(work => ({
                         ...work,
-                        totalBudget: Number(work.totalBudget), // Asegurarse de que `totalBudget` sea un número
+                        totalBudget: Number(work.totalBudget),
                     }));
-                    setWorks(formattedWorks); // Guardar las obras en el estado
+                    setWorks(formattedWorks);
                 } else {
                     console.error('La respuesta de la API no es un array', worksResponse.data.data);
                     setError('Error al obtener las obras.');
@@ -39,30 +39,28 @@ const Dashboard = () => {
         };
 
         fetchUserData();
-    }, [user, navigate]); // Se asegura de que solo se ejecute cuando el usuario cambie
+    }, [user, navigate]);
 
     const handleCreateWork = () => {
-        navigate('/create-work'); // Redirige a la página de crear obra
+        navigate('/create-work');
     };
 
-    // Función para confirmar eliminación
     const handleDeleteConfirmation = (workId) => {
-        setSelectedWork(workId); // Establecer la obra seleccionada
-        setShowModal(true); // Mostrar el modal de confirmación
+        setSelectedWork(workId);
+        setShowModal(true);
     };
 
-    // Función para eliminar una obra
     const handleDeleteWork = async () => {
         if (!selectedWork) return;
         try {
-            await axiosInstance.delete(`/works/${selectedWork}`); // Llamada DELETE a la API
-            setWorks(works.filter(work => work.id !== selectedWork)); // Actualizar el estado local para quitar la obra eliminada
-            setShowModal(false); // Cerrar el modal tras eliminar
-            setSelectedWork(null); // Limpiar la obra seleccionada
+            await axiosInstance.delete(`/works/${selectedWork}`);
+            setWorks(works.filter(work => work.id !== selectedWork));
+            setShowModal(false);
+            setSelectedWork(null);
         } catch (error) {
             console.error('Error al eliminar la obra:', error);
             setError('No se pudo eliminar la obra. Intenta nuevamente.');
-            setShowModal(false); // Cerrar el modal aunque ocurra un error
+            setShowModal(false);
         }
     };
 
@@ -70,7 +68,6 @@ const Dashboard = () => {
         <div className="min-h-screen bg-gray-100">
             <div className="p-6">
                 <div className="container mx-auto">
-                    {/* Mostrar error si existe */}
                     {error && (
                         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
                             <strong className="font-bold">Error:</strong>
@@ -84,7 +81,6 @@ const Dashboard = () => {
                         </div>
                     )}
 
-                    {/* Botón de Crear Obra visible solo para ciertos roles, como admin */}
                     {user?.role === 'admin' && (
                         <div className="mb-6 text-right">
                             <button
@@ -95,23 +91,20 @@ const Dashboard = () => {
                             </button>
                         </div>
                     )}
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
-                        {/* Asegúrate de que works es un array antes de mapear */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
                         {Array.isArray(works) && works.map(work => (
                             <WorkCard
                                 key={work.id}
                                 work={work}
                                 userRole={user?.role}
                                 onEdit={() => navigate(`/edit-work/${work.id}`)}
-                                onDelete={() => handleDeleteConfirmation(work.id)} // Llamar a la función de confirmación
+                                onDelete={() => handleDeleteConfirmation(work.id)}
                             />
                         ))}
                     </div>
                 </div>
             </div>
 
-            {/* Modal de Confirmación */}
             <ConfirmationModal
                 show={showModal}
                 onClose={() => setShowModal(false)}

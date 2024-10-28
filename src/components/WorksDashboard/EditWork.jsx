@@ -1,20 +1,20 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axiosInstance from '../../services/axiosInstance'; // Usar axiosInstance configurada
-import { useAuth } from '../../context/useAuth'; // Usar el contexto de autenticación
+import axiosInstance from '../../services/axiosInstance';
+import { useAuth } from '../../context/useAuth';
 
 const EditWork = () => {
-    const { id } = useParams(); // Obtener el ID de la obra de la URL
+    const { id } = useParams();
     const [name, setName] = useState('');
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [totalBudget, setTotalBudget] = useState('');
-    const [formattedBudget, setFormattedBudget] = useState('');  // Mantén el valor formateado
+    const [formattedBudget, setFormattedBudget] = useState('');
     const [adminId, setAdminId] = useState('');
     const [users, setUsers] = useState([]);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
-    const { user, logout } = useAuth(); // Acceder al usuario y la función de logout desde el contexto
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -31,7 +31,7 @@ const EditWork = () => {
                 setStartDate(startDate ? new Date(startDate).toISOString().split('T')[0] : '');
                 setEndDate(endDate ? new Date(endDate).toISOString().split('T')[0] : '');
                 setTotalBudget(totalBudget);
-                setFormattedBudget(formatNumberWithDots(totalBudget.toString())); // Formatea el presupuesto inicial
+                setFormattedBudget(formatNumberWithDots(totalBudget.toString()));
                 setAdminId(adminId);
 
                 const usersResponse = await axiosInstance.get('/users');
@@ -40,7 +40,7 @@ const EditWork = () => {
                 console.error('Error al obtener los datos', error);
                 setError('Error al obtener los datos de la obra o los usuarios.');
                 if (error.response && error.response.status === 401) {
-                    logout(); // Si hay un error de autenticación (401), cerrar sesión
+                    logout();
                 }
             }
         };
@@ -48,16 +48,14 @@ const EditWork = () => {
         fetchData();
     }, [id, user, navigate, logout]);
 
-    // Función para formatear el número con puntos
     const formatNumberWithDots = (number) => {
         return number.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
     };
 
-    // Función para manejar cambios en el campo de presupuesto
     const handleBudgetChange = (e) => {
         const value = e.target.value;
-        setFormattedBudget(formatNumberWithDots(value)); // Actualiza el valor formateado
-        setTotalBudget(value.replace(/\./g, ''));  // Elimina los puntos para mantener el número "limpio"
+        setFormattedBudget(formatNumberWithDots(value));
+        setTotalBudget(value.replace(/\./g, ''));
     };
 
     const handleSubmit = async (e) => {
@@ -71,7 +69,7 @@ const EditWork = () => {
                 startDate,
                 endDate,
                 totalBudget,
-                adminId, // ID del usuario encargado seleccionado
+                adminId,
             });
             setSuccess('Obra actualizada con éxito');
             setTimeout(() => {
@@ -131,7 +129,7 @@ const EditWork = () => {
                     <div className="mb-4">
                         <label className="block text-gray-700">Presupuesto Total:</label>
                         <input
-                            type="text"  // Cambiamos a texto para permitir la inserción de puntos
+                            type="text"
                             value={formattedBudget}
                             onChange={handleBudgetChange}
                             className="w-full p-2 border border-gray-300 rounded mt-1"

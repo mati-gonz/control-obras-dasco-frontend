@@ -1,22 +1,20 @@
-// src/components/Dashboard/UserDetails.jsx
 import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
-import axiosInstance from '../../services/axiosInstance'; // Usar axiosInstance para manejar el token automáticamente
-import { useAuth } from '../../context/useAuth';  // Usar contexto de autenticación
-import ChangePasswordModal from './ChangePasswordModal';  // Importar el componente del modal de cambio de contraseña
+import axiosInstance from '../../services/axiosInstance';
+import { useAuth } from '../../context/useAuth';
+import ChangePasswordModal from './ChangePasswordModal';
 
 const UserDetail = ({ isMe }) => {
     const { id } = useParams();
     const navigate = useNavigate();
-    const { user: loggedInUser, loading } = useAuth();  // Obtener el usuario autenticado y el estado de carga desde el contexto
+    const { user: loggedInUser, loading } = useAuth();
     const [user, setUser] = useState(null);
     const [works, setWorks] = useState([]);
     const [error, setError] = useState('');
-    const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);  // Estado para el modal de cambiar contraseña
+    const [isPasswordModalOpen, setPasswordModalOpen] = useState(false);
 
     useEffect(() => {
-        // No hacer la llamada a la API si el usuario está cargando
         if (loading || !loggedInUser) {
             return;
         }
@@ -37,12 +35,10 @@ const UserDetail = ({ isMe }) => {
         fetchUserData();
     }, [id, isMe, loggedInUser, loading]);
     
-    // Mostrar mensaje de error si ocurre
     if (error) {
         return <div>{error}</div>;
     }
 
-    // Mostrar un indicador de carga si el usuario aún está cargando o si no hay datos de usuario
     if (loading || !user) {
         return <div>Cargando...</div>;
     }
@@ -75,7 +71,6 @@ const UserDetail = ({ isMe }) => {
 
     return (
         <div className="p-6">
-            {/* Detalles del usuario */}
             <div className="bg-white shadow rounded-lg p-6 mb-6">
                 <h1 className="text-2xl font-bold mb-4">Detalles del Usuario</h1>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -114,7 +109,6 @@ const UserDetail = ({ isMe }) => {
                 </div>
             </div>
 
-            {/* Lista de obras a cargo */}
             <div className="bg-white shadow rounded-lg p-6 mb-6">
                 <h2 className="text-xl font-bold mb-4">Obras a Cargo</h2>
                 <ul className="list-disc pl-5">
@@ -130,7 +124,6 @@ const UserDetail = ({ isMe }) => {
                 </ul>
             </div>
 
-            {/* Botón de volver */}
             <button
                 onClick={handleReturn}
                 className="bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400 transition duration-200"
@@ -139,18 +132,17 @@ const UserDetail = ({ isMe }) => {
                 Volver
             </button>
 
-            {/* Modal para cambiar contraseña */}
             <ChangePasswordModal
                 open={isPasswordModalOpen}
                 handleClose={handleClosePasswordModal}
-                userId={loggedInUser.id}  // Pasar el ID del usuario autenticado
+                userId={loggedInUser.id}
             />
         </div>
     );
 };
 
 UserDetail.propTypes = {
-    isMe: PropTypes.bool,  // Definir el tipo de isMe como boolean
+    isMe: PropTypes.bool,
 };
 
 export default UserDetail;

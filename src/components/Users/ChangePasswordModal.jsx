@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Modal, Box, Button, TextField, Typography, IconButton, InputAdornment } from '@mui/material';
-import { Visibility, VisibilityOff } from '@mui/icons-material'; // Importamos los íconos para el ojo
+import { Visibility, VisibilityOff } from '@mui/icons-material';
 import axiosInstance from '../../services/axiosInstance';
 
 const ChangePasswordModal = ({ open, handleClose, userId }) => {
@@ -9,9 +9,9 @@ const ChangePasswordModal = ({ open, handleClose, userId }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [showCurrentPassword, setShowCurrentPassword] = useState(false); // Para alternar visibilidad de la contraseña actual
-  const [showNewPassword, setShowNewPassword] = useState(false); // Para alternar visibilidad de la nueva contraseña
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // Para alternar visibilidad de la confirmación de contraseña
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -32,7 +32,7 @@ const ChangePasswordModal = ({ open, handleClose, userId }) => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-      handleClose(); // Cerrar el modal después de actualizar la contraseña exitosamente
+      handleClose();
     } catch (error) {
       setError('Error al actualizar la contraseña. Verifica tu contraseña actual.');
       console.error(error);
@@ -61,7 +61,7 @@ const ChangePasswordModal = ({ open, handleClose, userId }) => {
         <form onSubmit={handleSubmit}>
           <TextField
             label="Contraseña Actual"
-            type={showCurrentPassword ? "text" : "password"} // Cambiar entre mostrar texto o asteriscos
+            type={showCurrentPassword ? "text" : "password"}
             fullWidth
             margin="normal"
             value={currentPassword}
@@ -81,7 +81,7 @@ const ChangePasswordModal = ({ open, handleClose, userId }) => {
           />
           <TextField
             label="Nueva Contraseña"
-            type={showNewPassword ? "text" : "password"} // Cambiar entre mostrar texto o asteriscos
+            type={showNewPassword ? "text" : "password"}
             fullWidth
             margin="normal"
             value={newPassword}
@@ -101,7 +101,7 @@ const ChangePasswordModal = ({ open, handleClose, userId }) => {
           />
           <TextField
             label="Confirmar Nueva Contraseña"
-            type={showConfirmPassword ? "text" : "password"} // Cambiar entre mostrar texto o asteriscos
+            type={showConfirmPassword ? "text" : "password"}
             fullWidth
             margin="normal"
             value={confirmPassword}

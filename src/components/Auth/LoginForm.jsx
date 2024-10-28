@@ -1,22 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaLock, FaSignInAlt } from 'react-icons/fa';
-import { useAuth } from '../../context/useAuth';  // Importar el contexto de autenticación
-import axiosInstance from '../../services/axiosInstance';  // Importar la instancia configurada
+import { useAuth } from '../../context/useAuth';
+import axiosInstance from '../../services/axiosInstance';
 
 const LoginForm = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
-    const { user, login } = useAuth(); // Acceder al user y login desde el contexto
+    const { user, login } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
         if (user) {
-            // Si el usuario está autenticado, redirigir al dashboard
             navigate('/dashboard');
         }
-    }, [user, navigate]); // Se ejecutará cuando `user` cambie
+    }, [user, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -28,14 +27,12 @@ const LoginForm = () => {
                 password,
             });
 
-            // Guardar los tokens y actualizar el contexto de autenticación
             const userData = {
                 accessToken: response.data.accessToken,
                 refreshToken: response.data.refreshToken,
             };
-            login(userData); // Llama al método login del contexto
+            login(userData);
 
-            // Redirigir al dashboard tras un login exitoso
             navigate('/dashboard');
         } catch (error) {
             if (error.response) {

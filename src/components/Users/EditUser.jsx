@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import axiosInstance from '../../services/axiosInstance';  // Usar axiosInstance en vez de axios
-import { useAuth } from '../../context/useAuth';  // Importar el contexto de autenticación
+import axiosInstance from '../../services/axiosInstance';
+import { useAuth } from '../../context/useAuth';
 
 const EditUser = () => {
     const { id } = useParams();
@@ -11,7 +11,7 @@ const EditUser = () => {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
-    const { user } = useAuth();  // Obtener la información de autenticación desde el contexto
+    const { user } = useAuth();
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -22,9 +22,8 @@ const EditUser = () => {
                 setEmail(email);
                 setRole(role);
     
-                // Si el usuario no es administrador y no es el propietario del perfil, redirigir
                 if (user.role !== 'admin' && user.id !== parseInt(id)) {
-                    navigate('/'); // Redirigir a la página principal si no tiene permiso
+                    navigate('/');
                 }
             } catch (error) {
                 console.error('Error fetching user data', error);
@@ -40,10 +39,8 @@ const EditUser = () => {
         setError('');
         setSuccess('');
 
-        // Preparamos los datos del formulario
         const userData = { name, email };
 
-        // Solo los administradores pueden cambiar el rol
         if (user.role === 'admin') {
             userData.role = role;
         }
@@ -52,10 +49,9 @@ const EditUser = () => {
             await axiosInstance.put(`/users/${id}`, userData);
             setSuccess('Usuario actualizado con éxito');
 
-            // Redirigir al User Management después de actualizar el usuario
             setTimeout(() => {
-                navigate('/user-management');  // Redirige a la lista de usuarios
-            }, 1000); // Espera 2 segundos antes de redirigir
+                navigate('/user-management');
+            }, 1000);
 
         } catch (error) {
             setError('Error al actualizar el usuario. Intente nuevamente.');
@@ -63,7 +59,6 @@ const EditUser = () => {
         }
     };
 
-    // Manejar el botón "Volver" que redirige al User Management sin actualizar
     const handleBack = () => {
         navigate(`/users/${id}/details`);
     };
@@ -96,7 +91,6 @@ const EditUser = () => {
                         />
                     </div>
                     
-                    {/* Solo mostrar el campo de rol si el usuario es administrador */}
                     {user.role === 'admin' && (
                         <div className="mb-6">
                             <label className="block text-gray-700">Rol:</label>
@@ -115,7 +109,7 @@ const EditUser = () => {
                     <div className="flex justify-between">
                         <button 
                             type="button" 
-                            onClick={handleBack}  // Botón para volver
+                            onClick={handleBack}
                             className="bg-gray-500 text-white py-2 px-4 rounded hover:bg-gray-600 transition duration-200"
                         >
                             Volver

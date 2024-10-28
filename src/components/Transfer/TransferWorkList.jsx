@@ -12,9 +12,15 @@ const TransferWorkList = () => {
 
     const fetchWorks = async () => {
         try {
-            const endpoint = user.role === 'admin'
-                ? `/transfers/works`
-                : `/transfers/works/${userId}`;
+            let endpoint;
+            
+            if (user.role === 'admin') {
+                endpoint = parseInt(userId) === user.id
+                    ? `/transfers/works`
+                    : `/transfers/works/${userId}`;
+            } else {
+                endpoint = `/transfers/works/${userId}`;
+            }
 
             const response = await axiosInstance.get(endpoint);
             setWorks(response.data);
@@ -22,6 +28,7 @@ const TransferWorkList = () => {
             console.error('Error al obtener las obras:', error);
         }
     };
+
 
     useEffect(() => {
         fetchWorks();

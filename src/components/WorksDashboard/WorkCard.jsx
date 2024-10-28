@@ -1,11 +1,10 @@
-import PropTypes from 'prop-types';  // Importa PropTypes para la validación de props
+import PropTypes from 'prop-types';
 import { useNavigate } from 'react-router-dom';
-import { FaEye, FaEdit, FaTrash } from 'react-icons/fa';  // Importa los iconos de FontAwesome
+import { FaEye, FaEdit, FaTrash } from 'react-icons/fa';
 
 const WorkCard = ({ work, userRole, onEdit, onDelete }) => {
     const navigate = useNavigate();
 
-    // Formatear fecha en formato dd/mm/yyyy
     const formatDate = (dateString) => {
         if (!dateString) return 'Sin fecha';
         const date = new Date(dateString);
@@ -15,13 +14,11 @@ const WorkCard = ({ work, userRole, onEdit, onDelete }) => {
         return `${day}/${month}/${year}`;
     };
 
-    // Formatear presupuesto en formato de moneda CLP
     const formatCurrency = (amount) => {
         if (!amount) return 'Sin presupuesto';
         return Number(amount).toLocaleString('es-CL', { style: 'currency', currency: 'CLP', minimumFractionDigits: 0 });
     };
 
-    // Navegar a los detalles de la obra
     const handleViewDetail = () => {
         navigate(`/work/${work.id}/details`);
     };
@@ -32,25 +29,24 @@ const WorkCard = ({ work, userRole, onEdit, onDelete }) => {
             <p className="mb-1">Fecha de Inicio: {formatDate(work.startDate)}</p>
             <p className="mb-1">Fecha de Fin: {formatDate(work.endDate)}</p>
             <p className="mb-1">Presupuesto Total: {formatCurrency(work.totalBudget)}</p>
-            <div className="flex justify-between mt-4">
+            <div className="flex flex-wrap justify-between mt-4">
                 <button 
                     onClick={handleViewDetail} 
-                    className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200 mr-2 flex items-center"
+                    className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition duration-200 mr-2 mb-2 flex items-center"
                 >
                     <FaEye className="mr-1" /> Ver Detalle
                 </button>
-                {/* Mostrar botones de Editar y Eliminar solo si el usuario es admin */}
                 {userRole === 'admin' && (
-                    <div className="flex">
+                    <div className="flex flex-wrap">
                         <button 
                             onClick={onEdit} 
-                            className="bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-600 transition duration-200 mr-2 flex items-center"
+                            className="bg-yellow-500 text-white py-2 px-4 rounded hover:bg-yellow-600 transition duration-200 mr-2 mb-2 flex items-center"
                         >
                             <FaEdit className="mr-1" /> Editar
                         </button>
                         <button 
                             onClick={onDelete} 
-                            className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-200 flex items-center"
+                            className="bg-red-500 text-white py-2 px-4 rounded hover:bg-red-600 transition duration-200 mb-2 flex items-center"
                         >
                             <FaTrash className="mr-1" /> Eliminar
                         </button>
@@ -61,7 +57,6 @@ const WorkCard = ({ work, userRole, onEdit, onDelete }) => {
     );
 };
 
-// Validar las props que recibe el componente
 WorkCard.propTypes = {
     work: PropTypes.shape({
         id: PropTypes.number.isRequired,
@@ -72,7 +67,7 @@ WorkCard.propTypes = {
     }).isRequired,
     userRole: PropTypes.string.isRequired,
     onEdit: PropTypes.func.isRequired,
-    onDelete: PropTypes.func.isRequired, // Validar la prop onDelete
+    onDelete: PropTypes.func.isRequired,
 };
 
 export default WorkCard;

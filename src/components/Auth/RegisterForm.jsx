@@ -1,6 +1,5 @@
-// src/components/Auth/RegisterForm.jsx
 import { useState } from 'react';
-import axiosInstance from '../../services/axiosInstance';  // Usar axiosInstance configurado
+import axiosInstance from '../../services/axiosInstance';
 import { useNavigate } from 'react-router-dom';
 import PropTypes from 'prop-types'; 
 
@@ -8,7 +7,7 @@ const RegisterForm = ({ isAdmin }) => {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [role, setRole] = useState(isAdmin ? 'user' : 'admin');  // Definir el rol según el contexto
+    const [role, setRole] = useState(isAdmin ? 'user' : 'admin');
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
@@ -18,7 +17,6 @@ const RegisterForm = ({ isAdmin }) => {
         setError('');
         setSuccess('');
 
-        // Validar campos obligatorios
         if (!name || !email || !password) {
             setError('Por favor, complete todos los campos.');
             return;
@@ -27,7 +25,6 @@ const RegisterForm = ({ isAdmin }) => {
         try {
             const newUser = { name, email, password, role };
 
-            // Hacer una solicitud a la API usando axiosInstance
             await axiosInstance.post('/users/register', newUser);
 
             setSuccess('Usuario registrado con éxito.');
@@ -38,14 +35,13 @@ const RegisterForm = ({ isAdmin }) => {
                 setRole('user');
             }
 
-            // Redirigir según el contexto
             if (isAdmin) {
                 setTimeout(() => {
-                    navigate('/user-management');  // Redirigir a la gestión de usuarios si es admin
+                    navigate('/user-management');
                 }, 500);
             } else {
                 setTimeout(() => {
-                    navigate('/');  // Redirigir al login para usuarios normales
+                    navigate('/');
                 }, 500);
             }
         } catch (error) {
@@ -55,7 +51,7 @@ const RegisterForm = ({ isAdmin }) => {
     };
 
     const handleBack = () => {
-        navigate('/user-management');  // Redirigir a la gestión de usuarios
+        navigate('/user-management');
     };
 
     return (
@@ -127,9 +123,8 @@ const RegisterForm = ({ isAdmin }) => {
     );
 };
 
-// Definir propTypes para validar las propiedades
 RegisterForm.propTypes = {
-    isAdmin: PropTypes.bool.isRequired,  // isAdmin debe ser un booleano y es requerido
+    isAdmin: PropTypes.bool.isRequired,
 };
 
 export default RegisterForm;

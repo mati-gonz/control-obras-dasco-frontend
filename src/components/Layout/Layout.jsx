@@ -1,23 +1,22 @@
-// src/components/Layout/Layout.jsx
 import { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
-import { useAuth } from '../../context/useAuth';  // Usar el contexto de autenticación
+import { useAuth } from '../../context/useAuth';
 
 const Layout = () => {
     const [error, setError] = useState('');
-    const { user, logout } = useAuth();  // Obtener user y logout desde el contexto
+    const { user, logout } = useAuth();
     const navigate = useNavigate();
 
     useEffect(() => {
         if (!user) {
-            navigate('/'); // Redirige al login si no hay usuario
+            navigate('/');
         }
-    }, [user, navigate]);  // Solo se ejecuta si cambia el usuario
+    }, [user, navigate]);
 
     return (
         <div>
-            <Navbar userRole={user?.role} onLogout={logout} />  {/* Usar el rol del contexto */}
+            <Navbar userRole={user?.role} onLogout={logout} />
             <div className="content">
                 {error && (
                     <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
@@ -31,7 +30,7 @@ const Layout = () => {
                         </button>
                     </div>
                 )}
-                <Outlet />  {/* Aquí se renderizan las rutas hijas */}
+                <Outlet />
             </div>
         </div>
     );

@@ -10,44 +10,38 @@ import { format } from 'date-fns';
 import Zoom from 'react-medium-image-zoom';
 import 'react-medium-image-zoom/dist/styles.css';
 
-// Función para formatear montos con puntos
 const formatNumberWithDots = (number) => {
   return number.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
 };
 
-// Utilidad para formatear números
 const formatNumber = (num) => parseFloat(num).toLocaleString('es-CL', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-// Utilidad para formatear números
 const downloadReceipt = async (expenseId, download = false) => {
   try {
-    // Obtener la URL firmada y la extensión del archivo desde el backend
     const response = await axiosInstance.get(`/expenses/${expenseId}/receipt`);
     const signedUrl = response.data.signedUrl;
-    const fileExtension = response.data.fileExtension; // Obtenemos la extensión del archivo
+    const fileExtension = response.data.fileExtension;
 
-    // Si es descarga, realizar la solicitud del archivo con fetch
     if (download) {
-      const blobResponse = await fetch(signedUrl); // Hacer la solicitud de descarga con fetch
-      const blob = await blobResponse.blob(); // Obtener el blob del archivo
+      const blobResponse = await fetch(signedUrl);
+      const blob = await blobResponse.blob();
 
-      // Crear un enlace temporal para descargar el archivo
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `recibo-${expenseId}.${fileExtension}`; // Usar la extensión aquí
-      document.body.appendChild(a); // Añadir el enlace temporal al cuerpo
-      a.click(); // Simular un clic en el enlace para iniciar la descarga
-      document.body.removeChild(a); // Eliminar el enlace del DOM
-      window.URL.revokeObjectURL(url); // Revocar el objeto URL para liberar memoria
+      a.download = `recibo-${expenseId}.${fileExtension}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
     } else if (fileExtension === 'pdf') {
-      window.open(signedUrl, '_blank'); // Abrir PDF en una nueva pestaña
+      window.open(signedUrl, '_blank');
     } else if (['jpg', 'jpeg', 'png'].includes(fileExtension)) {
-      return signedUrl; // Devolver la URL para usarla en una imagen
+      return signedUrl;
     } else {
       const a = document.createElement('a');
       a.href = signedUrl;
-      a.download = `recibo-${expenseId}.${fileExtension}`; // Descargar el archivo con la extensión correcta
+      a.download = `recibo-${expenseId}.${fileExtension}`;
       a.click();
     }
   } catch (error) {
@@ -59,14 +53,10 @@ const downloadReceipt = async (expenseId, download = false) => {
 const saveExpense = async (expenseData, isEditMode, partId, selectedExpenseId) => {
   try {
     if (isEditMode) {
-      // Actualizar el gasto existente
       await axiosInstance.put(`/expenses/${selectedExpenseId}`, expenseData, {
-        // No es necesario agregar el encabezado Content-Type si estás usando FormData
       });
     } else {
-      // Crear un nuevo gasto
       await axiosInstance.post(`/expenses/parts/${partId}/expenses`, expenseData, {
-        // No es necesario agregar el encabezado Content-Type si estás usando FormData
       });
     }
   } catch (error) {
@@ -94,7 +84,6 @@ const PartDetail = () => {
   const [receiptUrl, setReceiptUrl] = useState(null);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
 
-  // Función para obtener los detalles de la partida
   const fetchPartDetails = async () => {
     try {
       const partResponse = await axiosInstance.get(`/parts/${partId}`);
@@ -111,16 +100,15 @@ const PartDetail = () => {
     fetchPartDetails();
   }, [partId]);
 
-  // Función para manejar cambios en los campos de entrada
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
     if (name === 'amount') {
       const formattedValue = formatNumberWithDots(value);
-      setFormattedAmount(formattedValue);  // Actualiza el valor formateado
+      setFormattedAmount(formattedValue);
       setNewExpense({
         ...newExpense,
-        amount: value.replace(/\./g, '')  // Almacena el valor limpio, sin puntos
+        amount: value.replace(/\./g, '')
       });
     } else {
       setNewExpense({
@@ -130,7 +118,6 @@ const PartDetail = () => {
     }
   };
 
-  // Función para manejar cambios en el archivo seleccionado
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     setNewExpense({
@@ -139,25 +126,22 @@ const PartDetail = () => {
     });
   };
 
-  // Función para abrir el modal de edición
   const handleEditExpense = (expense) => {
     setIsEditMode(true);
     setSelectedExpenseId(expense.id);
 
-    // Formatear la fecha correctamente para el campo de fecha en formato 'YYYY-MM-DD' sin modificar la zona horaria
-    const formattedDate = expense.date.slice(0, 10); // Solo toma la parte 'YYYY-MM-DD'
+    const formattedDate = expense.date.slice(0, 10);
 
     setNewExpense({
       amount: expense.amount,
       description: expense.description,
-      date: formattedDate, // Usar la fecha sin modificarla
+      date: formattedDate,
       receipt: null,
     });
 
     setIsModalOpen(true);
   };
 
-// Función para manejar la creación o edición de un gasto
 const handleSaveExpense = async (e) => {
   e.preventDefault();
   let formData = new FormData();
@@ -165,14 +149,12 @@ const handleSaveExpense = async (e) => {
   formData.append('amount', newExpense.amount);
   formData.append('description', newExpense.description);
   formData.append('date', newExpense.date);
-  formData.append('userId', currentUserId); // Agregar el userId al FormData
+  formData.append('userId', currentUserId);
 
-  // Añadir archivo si está presente
   if (newExpense.receipt) {
     formData.append('receipt', newExpense.receipt);
   }
 
-  // Guardar el gasto (crear o actualizar)
   await saveExpense(formData, isEditMode, partId, selectedExpenseId);
 
   setIsModalOpen(false);
@@ -183,15 +165,14 @@ const handleSaveExpense = async (e) => {
     date: '',
     receipt: null,
   });
-  fetchPartDetails(); // Recargar detalles de la partida y los gastos
+  fetchPartDetails();
 };
 
 
-  // Función para eliminar un gasto
   const handleDeleteExpense = async (expenseId) => {
     try {
       await axiosInstance.delete(`/expenses/expenses/${expenseId}`);
-      fetchPartDetails(); // Recargar detalles de los gastos
+      fetchPartDetails();
     } catch (error) {
       console.error('Error al eliminar el gasto:', error);
     }
@@ -232,7 +213,7 @@ const handleSaveExpense = async (e) => {
                 <TableCell>${formatNumber(expense.amount)}</TableCell>
                 <TableCell>{expense.description}</TableCell>
                 <TableCell>{format(new Date(expense.date), 'dd/MM/yyyy')}</TableCell>
-                <TableCell>{expense.User?.name || 'Desconocido'}</TableCell> {/* Mostrar el nombre del usuario */}
+                <TableCell>{expense.User?.name || 'Desconocido'}</TableCell>
                 <TableCell>
                   {expense.receiptUrl ? (
                     <>
@@ -241,8 +222,8 @@ const handleSaveExpense = async (e) => {
                         color="primary"
                         onClick={async () => {
                           const url = await downloadReceipt(expense.id);
-                          setReceiptUrl(url); // Almacena la URL para mostrar en el modal
-                          setIsImageModalOpen(true); // Abre el modal
+                          setReceiptUrl(url);
+                          setIsImageModalOpen(true);
                         }}
                       >
                         Ver Recibo
@@ -251,7 +232,7 @@ const handleSaveExpense = async (e) => {
                         variant="outlined"
                         color="secondary"
                         sx={{ ml: 1 }}
-                        onClick={() => downloadReceipt(expense.id, true)} // Descargar archivo
+                        onClick={() => downloadReceipt(expense.id, true)}
                       >
                         Descargar
                       </Button>
@@ -289,7 +270,6 @@ const handleSaveExpense = async (e) => {
           </button>
       </div>
 
-      {/* Modal para crear o editar un gasto */}
       <Modal open={isModalOpen} onClose={() => setIsModalOpen(false)}>
         <div className="bg-white p-6 rounded-lg shadow-lg mt-6" style={{ margin: '10% auto', width: '400px' }}>
           <Typography variant="h5" gutterBottom>
@@ -302,8 +282,8 @@ const handleSaveExpense = async (e) => {
                 variant="outlined"
                 fullWidth
                 name="amount"
-                value={formattedAmount}  // Mostrar el monto formateado
-                onChange={handleInputChange}  // Manejar el cambio de valor
+                value={formattedAmount}
+                onChange={handleInputChange}
                 required
               />
             </div>
@@ -320,7 +300,7 @@ const handleSaveExpense = async (e) => {
                 value={newExpense.date}
                 onChange={handleInputChange}
                 InputLabelProps={{ shrink: true }}
-                inputProps={{ max: new Date().toISOString().split("T")[0] }}  // Ajustar el valor máximo a la fecha actual
+                inputProps={{ max: new Date().toISOString().split("T")[0] }}
                 required
               />
             </div>
@@ -330,7 +310,6 @@ const handleSaveExpense = async (e) => {
               <input id="receipt" type="file" accept=".jpg,.jpeg,.png,.pdf" onChange={handleFileChange} />
             </div>
 
-            {/* Aquí se aplica el cambio */}
             <div className="flex items-center justify-between">
               <Button type="submit" variant="contained" color="primary">
                 {isEditMode ? 'Guardar Cambios' : 'Agregar Gasto'}
@@ -343,7 +322,6 @@ const handleSaveExpense = async (e) => {
         </div>
       </Modal>
 
-      {/* Modal para mostrar la imagen */}
       <Modal open={isImageModalOpen} onClose={() => setIsImageModalOpen(false)}>
         <Box sx={{
           margin: '5% auto',
